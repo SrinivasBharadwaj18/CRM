@@ -1,0 +1,77 @@
+.lead-card {
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  padding: 16px;
+
+  cursor: pointer;
+
+  background: white;
+
+  transition: 0.2s;
+
+}
+
+.lead-card:hover {
+
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+
+}
+
+.lead-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+}
+
+.status-badge {
+
+  color: white;
+
+  padding: 4px 10px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+
+  text-transform: capitalize;
+
+}
+
+.lead-body {
+
+  margin-top: 10px;
+
+}
+
+.lead-phone {
+
+  font-size: 14px;
+
+  color: #555;
+
+}
+
+.insurance-badge {
+
+  display: inline-block;
+
+  margin-top: 6px;
+
+  background: #e0f2fe;
+
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+
+  color: #0369a1;
+
+}

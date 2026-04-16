@@ -1,0 +1,9 @@
+Django>=6.0.2
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-environ
+psycopg2-binary
+pandas
+gunicorn
+pytz
