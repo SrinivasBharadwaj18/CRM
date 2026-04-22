@@ -9,6 +9,7 @@ import CreateAgent from "../pages/CreateAgent";
 import UploadLeads from "../pages/UploadLeads";
 import Leads from "../pages/Leads.jsx";
 import Dashboard from "../pages/AgentHome"
+import MyEarnings from "../pages/MyEarnings.jsx";
 import { Navigate } from "react-router-dom";
 
 function AppRoutes() {
@@ -28,6 +29,7 @@ function AppRoutes() {
         <Route path="/lead/:id" element={<ProtectedRoute role="agent"><CurrentLead /></ProtectedRoute>} />
         <Route path="/lead/:id/process" element={<ProtectedRoute role="agent"><Process /></ProtectedRoute>} />
         <Route path="/lead/:id/await" element={<ProtectedRoute role="agent"><Await /></ProtectedRoute>} />
+        <Route path="/agent/earnings" element={<ProtectedRoute role="agent"><MyEarnings /></ProtectedRoute>} />
 
         {/* THE CATCH-ALL MUST BE INSIDE THE ROUTES BLOCK */}
         <Route path="*" element={<Navigate to="/" replace />} />
