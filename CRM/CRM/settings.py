@@ -132,6 +132,8 @@ USE_TZ = True
 
 # --- CORS ---
 CORS_ALLOW_ALL_ORIGINS = True # Set to False and use CORS_ALLOWED_ORIGINS in strict production
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', 'frontend']
-
+ALLOWED_HOSTS = ['13.61.192.169', 'policyhub4u.com', 'www.policyhub4u.com', 'localhost', '127.0.0.1', 'backend', 'frontend']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
