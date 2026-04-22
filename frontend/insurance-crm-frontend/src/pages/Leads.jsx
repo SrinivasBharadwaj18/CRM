@@ -177,7 +177,7 @@ function Leads() {
                         <div style={styles.actionGroup}>
                           {lead.status !== 'converted' && lead.status !== 'not_interested' && (
                             <>
-                              <button style={styles.callBtn} onClick={() => handleCall(lead)}>Call</button>
+                              <button style={styles.callBtn}>Call</button>
                               <button style={styles.processBtn} onClick={() => navigate(`/lead/${lead.id}/process/`)}>Process</button>
                             </>
                           )}
