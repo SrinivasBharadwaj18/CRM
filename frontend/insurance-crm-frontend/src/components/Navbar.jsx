@@ -52,7 +52,7 @@ function Navbar() {
               
               <a 
                 style={styles.toolLink} 
-                href="http://localhost:8000/admin/" 
+                href="/admin/" 
                 target="_blank" 
                 rel="noopener noreferrer"
               >
