@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, Users, PhoneCall, CheckSquare, 
   Wallet, Settings, Bell, ChevronDown, Calendar, 
-  ExternalLink 
+  ExternalLink, Check 
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -16,178 +16,209 @@ const data = [
 
 const MyEarnings = () => {
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 hidden md:block">
-        <div className="p-6 flex items-center gap-2 text-blue-600">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-             <span className="text-white text-xs font-bold italic">PH</span>
-          </div>
-          <h1 className="font-bold text-lg">Agent Dashboard</h1>
+    <div style={styles.page}>
+      
+      {/* SIDEBAR */}
+      <aside style={styles.sidebar}>
+        <div style={styles.sidebarHeader}>
+            <div style={styles.logoIcon}>PH</div>
+            <span>Agent CRM</span>
         </div>
-        
-        <nav className="mt-4 px-4 space-y-1">
-          {[
-            { icon: LayoutDashboard, label: 'Dashboard' },
-            { icon: Users, label: 'Leads' },
-            { icon: PhoneCall, label: 'Call History' },
-            { icon: CheckSquare, label: 'Tasks' },
-            { icon: Wallet, label: 'My Earnings', active: true },
-          ].map((item) => (
-            <button
-              key={item.label}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                item.active ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100'
-              }`}
-            >
-              <item.icon size={18} />
-              {item.label}
-            </button>
-          ))}
+        <nav style={styles.navMenu}>
+          <NavItem icon={<LayoutDashboard size={18}/>} label="Dashboard" />
+          <NavItem icon={<Users size={18}/>} label="Leads" />
+          <NavItem icon={<PhoneCall size={18}/>} label="Call History" />
+          <NavItem icon={<CheckSquare size={18}/>} label="Tasks" />
+          <NavItem icon={<Wallet size={18}/>} label="My Earnings" active />
+          <NavItem icon={<Settings size={18}/>} label="Settings" />
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <header className="h-16 bg-blue-600 flex items-center justify-between px-8 text-white">
-          <h2 className="text-xl font-semibold">My Earnings</h2>
-          <div className="flex items-center gap-4">
-            <Bell size={20} className="cursor-pointer hover:opacity-80" />
-            <Settings size={20} className="cursor-pointer hover:opacity-80" />
-            <div className="w-8 h-8 bg-white/20 rounded-full border border-white/30" />
+      {/* MAIN CONTENT */}
+      <main style={styles.mainContent}>
+        
+        {/* TOP HEADER */}
+        <header style={styles.header}>
+          <h2 style={styles.headerTitle}>My Earnings</h2>
+          <div style={styles.headerIcons}>
+            <Bell size={20} style={{cursor: 'pointer'}} />
+            <div style={styles.profileCircle}></div>
           </div>
         </header>
 
-        <div className="p-8 max-w-7xl mx-auto space-y-6">
-          {/* Controls */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-600 shadow-sm">
-              <Calendar size={16} className="text-blue-600" />
+        <div style={styles.wrapper}>
+          
+          {/* CONTROLS */}
+          <div style={styles.controlsRow}>
+            <div style={styles.pill}>
+              <Calendar size={16} color="#3b82f6" />
               <span>Apr 1 2024 - Apr 30 2024</span>
             </div>
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-600 shadow-sm cursor-pointer">
-              <LayoutDashboard size={16} className="text-blue-600" />
+            <div style={{...styles.pill, cursor: 'pointer'}}>
+              <LayoutDashboard size={16} color="#3b82f6" />
               <span>Monthly</span>
               <ChevronDown size={14} />
             </div>
           </div>
 
-          {/* Top Row: Chart & Total */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-start mb-6">
+          {/* GRID: CHART & INCENTIVES */}
+          <div style={styles.grid}>
+            
+            {/* Chart Card */}
+            <div style={{...styles.card, gridColumn: 'span 8'}}>
+              <div style={styles.cardHeader}>
                 <div>
-                  <h3 className="text-slate-500 text-sm font-medium">Total Earnings</h3>
-                  <p className="text-3xl font-bold text-blue-900 mt-1">₹25,500</p>
-                  <div className="flex gap-8 mt-4">
-                    <div>
-                      <span className="text-xs text-slate-400">Salary</span>
-                      <p className="font-semibold text-orange-400">₹20,000</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-slate-400">Incentives</span>
-                      <p className="font-semibold text-slate-700">₹5,500</p>
-                    </div>
+                  <div style={styles.labelSmall}>TOTAL EARNINGS</div>
+                  <div style={styles.earningsValue}>₹25,500</div>
+                  <div style={styles.subStats}>
+                    <div><span style={styles.labelExtraSmall}>SALARY</span><p style={styles.salaryText}>₹20,000</p></div>
+                    <div><span style={styles.labelExtraSmall}>INCENTIVES</span><p style={styles.incentiveText}>₹5,500</p></div>
                   </div>
                 </div>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                  <button className="px-4 py-1.5 text-xs font-bold bg-white rounded-md shadow-sm">Weekly</button>
-                  <button className="px-4 py-1.5 text-xs font-medium text-slate-500">Monthly</button>
+                <div style={styles.toggleGroup}>
+                  <button style={styles.toggleActive}>Weekly</button>
+                  <button style={styles.toggleInactive}>Monthly</button>
                 </div>
               </div>
-              <div className="h-[200px] w-full">
+              
+              <div style={{height: '250px', width: '100%'}}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} />
                     <Tooltip cursor={{fill: '#f8fafc'}} />
-                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
+                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={35} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Incentives Checklist */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-slate-800">Incentives</h3>
-                <span className="text-xs text-slate-400 flex items-center gap-1">
-                  Apr 2024 <ChevronDown size={12} />
-                </span>
-              </div>
-              <div className="space-y-4">
-                {[
-                  { label: 'Monthly Target Achieved', amount: '₹3,000', checked: true },
-                  { label: 'Weekly Bonus', amount: '₹500', checked: true, date: 'Apr 06' },
-                  { label: 'Weekly Bonus', amount: '₹500', checked: true, date: 'Apr 13' },
-                  { label: 'Weekly Bonus', amount: '₹500', checked: true, date: 'Apr 20' },
-                  { label: 'Performance Bonus', amount: '₹500', checked: true, date: 'Apr 27' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded flex items-center justify-center border ${item.checked ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
-                        {item.checked && <CheckSquare size={12} className="text-white" />}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700">{item.label}</span>
-                        {item.date && <span className="text-[10px] text-slate-400">{item.date}</span>}
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold text-slate-700">{item.amount}</span>
+            {/* Incentives Card */}
+            <div style={{...styles.card, gridColumn: 'span 4'}}>
+              <h4 style={styles.cardTitle}>Current Incentives</h4>
+              {[
+                { label: 'Monthly Target', val: '₹3,000' },
+                { label: 'Weekly Bonus', val: '₹500' },
+                { label: 'Performance', val: '₹1,000' },
+                { label: 'Login Bonus', val: '₹500' },
+                { label: 'Quality Bonus', val: '₹500' },
+              ].map((item, i) => (
+                <div key={i} style={styles.incentiveRow}>
+                  <div style={styles.checkContainer}>
+                    <div style={styles.checkBox}><Check size={12} strokeWidth={4} /></div>
+                    <span style={styles.incentiveLabel}>{item.label}</span>
                   </div>
-                ))}
-              </div>
+                  <span style={styles.incentiveVal}>{item.val}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Bottom Table */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800">Recent Incentives</h3>
-            </div>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500 font-medium">
-                <tr>
-                  <th className="px-6 py-4">Week</th>
-                  <th className="px-6 py-4">Incentive</th>
-                  <th className="px-6 py-4">Earnings</th>
-                  <th className="px-6 py-4">Actions</th>
+          {/* RECENT TABLE */}
+          <div style={styles.tableCard}>
+            <div style={styles.tableHeader}>Recent Payout History</div>
+            <table style={styles.table}>
+              <thead>
+                <tr style={styles.tableHeadRow}>
+                  <th style={styles.th}>Week</th>
+                  <th style={styles.th}>Incentive Type</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {[
-                  { week: 'Week 4', title: 'Monthly Target Achieved', val: '₹3,000' },
-                  { week: 'Week 4', title: 'Weekly Bonus', val: '₹500' },
-                  { week: 'Week 3', title: 'Weekly Bonus', val: '₹500' },
-                  { week: 'Week 2', title: 'Weekly Bonus', val: '₹500' },
+                  { w: 'Week 4', t: 'Monthly Target', a: '₹3,000' },
+                  { w: 'Week 3', t: 'Weekly Bonus', a: '₹500' },
+                  { w: 'Week 2', t: 'Weekly Bonus', a: '₹500' },
                 ].map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium">{row.week}</td>
-                    <td className="px-6 py-4 text-slate-600">{row.title}</td>
-                    <td className="px-6 py-4 font-bold">{row.val}</td>
-                    <td className="px-6 py-4">
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded">
-                        <ExternalLink size={12} />
-                        Details
+                  <tr key={i} style={styles.tableRow}>
+                    <td style={styles.tdBold}>{row.w}</td>
+                    <td style={styles.td}>{row.t}</td>
+                    <td style={styles.tdBold}>{row.a}</td>
+                    <td style={styles.td}>
+                      <button style={styles.actionBtn}>
+                        <ExternalLink size={12} /> Details
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="p-4 flex justify-center border-t border-slate-100">
-               <div className="flex gap-2">
-                  <button className="w-8 h-8 flex items-center justify-center rounded border bg-blue-600 text-white text-xs">1</button>
-                  <button className="w-8 h-8 flex items-center justify-center rounded border hover:bg-slate-50 text-xs">2</button>
-               </div>
-            </div>
           </div>
         </div>
       </main>
     </div>
   );
+};
+
+// --- SUB-COMPONENT FOR CLEANER NAV ---
+const NavItem = ({ icon, label, active }) => (
+  <div style={{
+    ...styles.navItem, 
+    backgroundColor: active ? '#334155' : 'transparent',
+    color: active ? '#fff' : '#94a3b8',
+    borderLeft: active ? '4px solid #3b82f6' : '4px solid transparent'
+  }}>
+    {icon}
+    <span>{label}</span>
+  </div>
+);
+
+// --- THE STYLES OBJECT ---
+const styles = {
+  page: { display: 'flex', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif" },
+  
+  // Sidebar
+  sidebar: { width: '240px', backgroundColor: '#1e293b', color: 'white', position: 'fixed', height: '100vh', left: 0, top: 0, display: 'flex', flexDirection: 'column' },
+  sidebarHeader: { padding: '25px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', fontWeight: '800', color: '#3b82f6' },
+  logoIcon: { width: '30px', height: '30px', background: '#3b82f6', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontStyle: 'italic' },
+  navMenu: { padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '5px' },
+  navItem: { padding: '12px 25px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: '600', transition: '0.2s' },
+  
+  // Content
+  mainContent: { flex: 1, marginLeft: '240px' },
+  header: { height: '60px', backgroundColor: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', color: 'white' },
+  headerTitle: { fontSize: '1.1rem', fontWeight: '600', margin: 0 },
+  headerIcons: { display: 'flex', alignItems: 'center', gap: '20px' },
+  profileCircle: { width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' },
+  
+  wrapper: { padding: '30px', maxWidth: '1200px', margin: '0 auto' },
+  controlsRow: { display: 'flex', gap: '12px', marginBottom: '25px' },
+  pill: { background: 'white', border: '1px solid #e2e8f0', padding: '8px 15px', borderRadius: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', color: '#64748b' },
+  
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px', marginBottom: '20px' },
+  card: { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px' },
+  cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' },
+  cardTitle: { margin: '0 0 20px 0', fontSize: '0.9rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' },
+  
+  labelSmall: { fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' },
+  earningsValue: { fontSize: '2rem', fontWeight: '900', color: '#1e3a8a', margin: '5px 0' },
+  subStats: { display: 'flex', gap: '30px', marginTop: '15px' },
+  labelExtraSmall: { fontSize: '0.6rem', color: '#cbd5e1', fontWeight: '800' },
+  salaryText: { margin: 0, fontWeight: '700', color: '#f97316', fontSize: '1rem' },
+  incentiveText: { margin: 0, fontWeight: '700', color: '#1e293b', fontSize: '1rem' },
+  
+  toggleGroup: { background: '#f1f5f9', padding: '4px', borderRadius: '8px', height: 'fit-content' },
+  toggleActive: { border: 'none', background: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '800', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', cursor: 'pointer' },
+  toggleInactive: { border: 'none', background: 'transparent', padding: '6px 12px', color: '#94a3b8', fontSize: '0.7rem', cursor: 'pointer' },
+
+  incentiveRow: { display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
+  checkContainer: { display: 'flex', alignItems: 'center', gap: '10px' },
+  checkBox: { width: '18px', height: '18px', background: '#10b981', color: 'white', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  incentiveLabel: { fontSize: '0.85rem', fontWeight: '500', color: '#475569' },
+  incentiveVal: { fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' },
+
+  tableCard: { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' },
+  tableHeader: { padding: '20px', fontWeight: '800', fontSize: '0.9rem', color: '#1e293b', borderBottom: '1px solid #f1f5f9' },
+  table: { width: '100%', borderCollapse: 'collapse' },
+  tableHeadRow: { background: '#f8fafc' },
+  th: { padding: '15px 20px', textAlign: 'left', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' },
+  tableRow: { borderBottom: '1px solid #f8fafc' },
+  td: { padding: '15px 20px', fontSize: '0.85rem', color: '#64748b' },
+  tdBold: { padding: '15px 20px', fontSize: '0.85rem', color: '#1e293b', fontWeight: '700' },
+  actionBtn: { background: '#3b82f6', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }
 };
 
 export default MyEarnings;
