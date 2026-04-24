@@ -54,6 +54,7 @@ class Employee(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(blank=True, null=True)
     score = models.IntegerField(default = 0)
     objects = EmployeeManager()
+    base_salary = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email", "name"]
@@ -393,6 +394,32 @@ class AdminTask(models.Model):
         ordering = ['order']
 
 
+class Incentive(models.Model):
+    # The types of bonuses you want to show on the Checklist/Table
+    INCENTIVE_TYPES = [
+        ('monthly_target', 'Monthly Target Achieved'),
+        ('weekly_bonus', 'Weekly Bonus'),
+        ('performance', 'Performance Bonus'),
+        ('attendance', 'Login/Attendance Bonus'),
+    ]
+
+    agent = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='incentives')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    type = models.CharField(max_length=20, choices=INCENTIVE_TYPES)
+    
+    # This helps the "Weekly Bar Chart" know which week to put the bar in
+    date_earned = models.DateField(default=timezone.now)
+    
+    description = models.CharField(max_length=255, blank=True)
+    is_paid = models.BooleanField(default=False) # For tracking if it was included in their paycheck
+
+    class Meta:
+        ordering = ['-date_earned']
+
+    def __str__(self):
+        return f"{self.agent.name} - {self.get_type_display()} - ₹{self.amount}"
+    
+
 
 @receiver(post_save, sender=Employee)
 def distribute_leads_to_new_agent(sender, instance, created, **kwargs):
@@ -438,3 +465,4 @@ def distribute_leads_to_new_agent(sender, instance, created, **kwargs):
             Lead.objects.filter(id__in=leads_to_assign_ids).update(assigned_to=instance)
 
             print(f"🚀 REBALANCE: {len(leads_to_assign_ids)} leads moved to new agent: {instance.name}")
+

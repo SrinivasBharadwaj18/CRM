@@ -22,9 +22,16 @@ from .models import (
     Employee, Lead, MotorLead, HealthLead, LifeLead, 
     Conversion, Insurance, FollowUp, Score, 
     DailyOverallPerformance, Attendance, LeaveRequest,
-    RecruitmentStats,AdminTask
+    RecruitmentStats,AdminTask, Incentive
 )
 from django.db.models import Min, Case, When, Value, IntegerField
+
+from rest_framework.views import APIView
+from django.db.models.functions import TruncWeek
+from .serializers import IncentiveSerializer
+
+
+
 
 # --- AUTHENTICATION ---
 
@@ -543,3 +550,87 @@ def mark_as_paid(request, id):
         "message": "Payment confirmed!",
         "payment_status": lead.payment_status
     })
+
+
+
+
+class AgentEarningsDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        agent = request.user
+        today = timezone.now().date()
+        first_day_curr_month = today.replace(day=1)
+        
+        # 1. TOTALS AGGREGATION
+        # Get all incentives earned this month
+        monthly_incentives_qs = Incentive.objects.filter(
+            agent=agent,
+            date_earned__gte=first_day_curr_month
+        )
+        
+        total_incentives = monthly_incentives_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        base_salary = getattr(agent, 'base_salary', 20000) # Fallback to 20k if not set
+        total_earnings = float(base_salary) + float(total_incentives)
+
+        # 2. CHART LOGIC (Weekly Breakdown)
+        # Grouping by week using Django's TruncWeek
+        chart_qs = monthly_incentives_qs.annotate(week=TruncWeek('date_earned')) \
+            .values('week') \
+            .annotate(total=Sum('amount')) \
+            .order_by('week')
+
+        # We format it exactly how your React BarChart expects: {name: 'Week 1', value: 500}
+        chart_data = []
+        for i, entry in enumerate(chart_qs):
+            chart_data.append({
+                "name": f"Week {i+1}",
+                "value": float(entry['total'])
+            })
+        
+        # Ensure at least an empty bar if no data exists
+        if not chart_data:
+            chart_data = [{"name": "Week 1", "value": 0}]
+
+        # 3. CHECKLIST LOGIC
+        # We check if specific incentive types exist for this agent this month
+        earned_types = monthly_incentives_qs.values_list('type', flat=True)
+        
+        checklist = [
+            {
+                "label": "Monthly Target Achieved", 
+                "amount": "₹3,000", 
+                "checked": 'monthly_target' in earned_types
+            },
+            {
+                "label": "Weekly Bonus", 
+                "amount": "₹500", 
+                "checked": 'weekly_bonus' in earned_types
+            },
+            {
+                "label": "Performance Bonus", 
+                "amount": "₹1,000", 
+                "checked": 'performance' in earned_types
+            },
+            {
+                "label": "Login Bonus", 
+                "amount": "₹500", 
+                "checked": 'attendance' in earned_types
+            },
+        ]
+
+        # 4. RECENT HISTORY
+        recent_incentives = monthly_incentives_qs.order_by('-date_earned')[:5]
+        history_data = IncentiveSerializer(recent_incentives, many=True).data
+
+        return Response({
+            "summary": {
+                "total_earnings": total_earnings,
+                "base_salary": float(base_salary),
+                "total_incentives": float(total_incentives),
+                "month": today.strftime("%B %Y")
+            },
+            "chart_data": chart_data,
+            "checklist": checklist,
+            "recent_history": history_data
+        })

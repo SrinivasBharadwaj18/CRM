@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import api from "../services/api"; // Assuming your api service is here
 import { 
   LayoutDashboard, Users, PhoneCall, CheckSquare, 
   Wallet, Settings, Bell, ChevronDown, Calendar, 
@@ -6,15 +7,36 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { name: 'Week 1', value: 3500 },
-  { name: 'Week 2', value: 4200 },
-  { name: 'Week 3', value: 4500 },
-  { name: 'Week 4', value: 5100 },
-  { name: 'Week 5', value: 6200 },
-];
-
 const MyEarnings = () => {
+  const [earningsData, setEarningsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        const res = await api.get("agent/earnings-dashboard/");
+        setEarningsData(res.data);
+      } catch (err) {
+        console.error("Error fetching earnings data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEarnings();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{...styles.page, justifyContent: 'center', alignItems: 'center', color: '#64748b'}}>
+        <h3>Calculating Earnings...</h3>
+      </div>
+    );
+  }
+
+  // Fallback if data fails to load
+  if (!earningsData) return <div>Error loading data. Please refresh.</div>;
+
   return (
     <div style={styles.page}>
       
@@ -52,7 +74,7 @@ const MyEarnings = () => {
           <div style={styles.controlsRow}>
             <div style={styles.pill}>
               <Calendar size={16} color="#3b82f6" />
-              <span>Apr 1 2024 - Apr 30 2024</span>
+              <span>{earningsData.summary.month}</span>
             </div>
             <div style={{...styles.pill, cursor: 'pointer'}}>
               <LayoutDashboard size={16} color="#3b82f6" />
@@ -64,15 +86,21 @@ const MyEarnings = () => {
           {/* GRID: CHART & INCENTIVES */}
           <div style={styles.grid}>
             
-            {/* Chart Card */}
+            {/* Chart Card - Dynamic */}
             <div style={{...styles.card, gridColumn: 'span 8'}}>
               <div style={styles.cardHeader}>
                 <div>
                   <div style={styles.labelSmall}>TOTAL EARNINGS</div>
-                  <div style={styles.earningsValue}>₹25,500</div>
+                  <div style={styles.earningsValue}>₹{earningsData.summary.total_earnings.toLocaleString()}</div>
                   <div style={styles.subStats}>
-                    <div><span style={styles.labelExtraSmall}>SALARY</span><p style={styles.salaryText}>₹20,000</p></div>
-                    <div><span style={styles.labelExtraSmall}>INCENTIVES</span><p style={styles.incentiveText}>₹5,500</p></div>
+                    <div>
+                        <span style={styles.labelExtraSmall}>SALARY</span>
+                        <p style={styles.salaryText}>₹{earningsData.summary.base_salary.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <span style={styles.labelExtraSmall}>INCENTIVES</span>
+                        <p style={styles.incentiveText}>₹{earningsData.summary.total_incentives.toLocaleString()}</p>
+                    </div>
                   </div>
                 </div>
                 <div style={styles.toggleGroup}>
@@ -83,7 +111,7 @@ const MyEarnings = () => {
               
               <div style={{height: '250px', width: '100%'}}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data}>
+                  <BarChart data={earningsData.chart_data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} />
                     <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fill: '#94a3b8'}} />
@@ -94,49 +122,50 @@ const MyEarnings = () => {
               </div>
             </div>
 
-            {/* Incentives Card */}
+            {/* Incentives Card - Dynamic Checklist */}
             <div style={{...styles.card, gridColumn: 'span 4'}}>
               <h4 style={styles.cardTitle}>Current Incentives</h4>
-              {[
-                { label: 'Monthly Target', val: '₹3,000' },
-                { label: 'Weekly Bonus', val: '₹500' },
-                { label: 'Performance', val: '₹1,000' },
-                { label: 'Login Bonus', val: '₹500' },
-                { label: 'Quality Bonus', val: '₹500' },
-              ].map((item, i) => (
+              {earningsData.checklist.map((item, i) => (
                 <div key={i} style={styles.incentiveRow}>
                   <div style={styles.checkContainer}>
-                    <div style={styles.checkBox}><Check size={12} strokeWidth={4} /></div>
-                    <span style={styles.incentiveLabel}>{item.label}</span>
+                    <div style={{
+                        ...styles.checkBox, 
+                        backgroundColor: item.checked ? '#10b981' : '#e2e8f0'
+                    }}>
+                        {item.checked && <Check size={12} strokeWidth={4} />}
+                    </div>
+                    <span style={{
+                        ...styles.incentiveLabel,
+                        textDecoration: item.checked ? 'none' : 'line-through',
+                        opacity: item.checked ? 1 : 0.5
+                    }}>
+                        {item.label}
+                    </span>
                   </div>
-                  <span style={styles.incentiveVal}>{item.val}</span>
+                  <span style={styles.incentiveVal}>{item.amount}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* RECENT TABLE */}
+          {/* RECENT TABLE - Dynamic History */}
           <div style={styles.tableCard}>
             <div style={styles.tableHeader}>Recent Payout History</div>
             <table style={styles.table}>
               <thead>
                 <tr style={styles.tableHeadRow}>
-                  <th style={styles.th}>Week</th>
+                  <th style={styles.th}>Date</th>
                   <th style={styles.th}>Incentive Type</th>
                   <th style={styles.th}>Amount</th>
                   <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { w: 'Week 4', t: 'Monthly Target', a: '₹3,000' },
-                  { w: 'Week 3', t: 'Weekly Bonus', a: '₹500' },
-                  { w: 'Week 2', t: 'Weekly Bonus', a: '₹500' },
-                ].map((row, i) => (
+                {earningsData.recent_history.map((row, i) => (
                   <tr key={i} style={styles.tableRow}>
-                    <td style={styles.tdBold}>{row.w}</td>
-                    <td style={styles.td}>{row.t}</td>
-                    <td style={styles.tdBold}>{row.a}</td>
+                    <td style={styles.tdBold}>{row.date_earned}</td>
+                    <td style={styles.td}>{row.type_display}</td>
+                    <td style={styles.tdBold}>₹{row.amount.toLocaleString()}</td>
                     <td style={styles.td}>
                       <button style={styles.actionBtn}>
                         <ExternalLink size={12} /> Details
@@ -144,6 +173,9 @@ const MyEarnings = () => {
                     </td>
                   </tr>
                 ))}
+                {earningsData.recent_history.length === 0 && (
+                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px', color: '#94a3b8'}}>No recent payout records found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -152,6 +184,8 @@ const MyEarnings = () => {
     </div>
   );
 };
+
+// ... NavItem and Styles remain exactly as you have them ...
 
 // --- SUB-COMPONENT FOR CLEANER NAV ---
 const NavItem = ({ icon, label, active }) => (

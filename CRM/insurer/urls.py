@@ -16,7 +16,8 @@ from .views import (
     admin_mega_dashboard,
     check_in,
     close_lead,
-    mark_as_paid
+    mark_as_paid,
+    AgentEarningsDashboardView
 )
 
 urlpatterns = [
@@ -49,5 +50,7 @@ urlpatterns = [
 
     path("agent/<int:id>/close/",close_lead, name="close_lead" ),
 
-    path("agent/<int:id>/mark-paid/",mark_as_paid, name="mark_paid")
+    path("agent/<int:id>/mark-paid/",mark_as_paid, name="mark_paid"),
+
+    path('agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
 ]

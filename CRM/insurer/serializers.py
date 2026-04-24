@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Employee, Lead, Conversion, FollowUp, MotorLead, HealthLead, LifeLead
+from .models import Employee, Lead, Conversion, FollowUp, MotorLead, HealthLead, LifeLead, Incentive
+
 
 # Need to define these so LeadSerializer can use them
 class MotorLeadSerializer(serializers.ModelSerializer):
@@ -66,6 +67,13 @@ class LeadSerializer(serializers.ModelSerializer):
             return followup.follow_up_date.strftime("%Y-%m-%d %H:%M")
         return None      
 
+class IncentiveSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+
+    class Meta:
+        model = Incentive
+        fields = ['id', 'type', 'type_display', 'amount', 'date_earned', 'description', 'is_paid']
+        
 # from insurer.models import Employee
 
 # # Create the management user
