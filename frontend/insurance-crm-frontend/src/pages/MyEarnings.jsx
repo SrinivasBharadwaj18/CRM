@@ -11,16 +11,25 @@ const MyEarnings = () => {
   const [earningsData, setEarningsData] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // 1. New state to track the active toggle
-  const [viewType, setViewType] = useState('weekly'); 
+  // Controls State
+  const [viewType, setViewType] = useState('weekly'); // 'weekly' or 'monthly'
+  const [selectedDate, setSelectedDate] = useState({
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear()
+  });
 
+  // Fetch data whenever viewType or selectedDate changes
   useEffect(() => {
     const fetchEarnings = async () => {
-      // We set loading to true so the user sees a refresh when switching modes
-      setLoading(true); 
+      setLoading(true);
       try {
-        // 2. Modified API call to include the view parameter
-        const res = await api.get(`agent/earnings-dashboard/?view=${viewType}`);
+        const res = await api.get("agent/earnings-dashboard/", {
+          params: {
+            view: viewType,
+            month: selectedDate.month,
+            year: selectedDate.year
+          }
+        });
         setEarningsData(res.data);
       } catch (err) {
         console.error("Error fetching earnings data", err);
@@ -30,20 +39,31 @@ const MyEarnings = () => {
     };
 
     fetchEarnings();
-  }, [viewType]); // 3. Re-run this effect every time viewType changes
+  }, [viewType, selectedDate]);
+
+  // Handler for the Month Pill dropdown
+  const handleMonthChange = (e) => {
+    const [m, y] = e.target.value.split('-').map(Number);
+    setSelectedDate({ month: m, year: y });
+  };
 
   if (loading && !earningsData) {
     return (
       <div style={{...styles.page, justifyContent: 'center', alignItems: 'center', color: '#64748b'}}>
-        <h3>Calculating Earnings...</h3>
+        <div style={{textAlign: 'center'}}>
+            <div style={styles.loaderSpinner}></div>
+            <h3 style={{marginTop: '20px'}}>Calculating Your Earnings...</h3>
+        </div>
       </div>
     );
   }
 
-  if (!earningsData) return <div>Error loading data. Please refresh.</div>;
+  if (!earningsData) return <div style={styles.page}>Error loading data. Please refresh.</div>;
 
   return (
     <div style={styles.page}>
+      
+      {/* SIDEBAR */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
             <div style={styles.logoIcon}>PH</div>
@@ -59,7 +79,10 @@ const MyEarnings = () => {
         </nav>
       </aside>
 
+      {/* MAIN CONTENT */}
       <main style={styles.mainContent}>
+        
+        {/* TOP HEADER */}
         <header style={styles.header}>
           <h2 style={styles.headerTitle}>My Earnings</h2>
           <div style={styles.headerIcons}>
@@ -69,19 +92,47 @@ const MyEarnings = () => {
         </header>
 
         <div style={styles.wrapper}>
+          
+          {/* CONTROLS ROW */}
           <div style={styles.controlsRow}>
-            <div style={styles.pill}>
+            {/* MONTH PICKER PILL */}
+            <div style={{...styles.pill, position: 'relative'}}>
               <Calendar size={16} color="#3b82f6" />
-              <span>{earningsData.summary.month}</span>
+              <span>{earningsData.summary.month_display}</span>
+              <select 
+                value={`${selectedDate.month}-${selectedDate.year}`}
+                onChange={handleMonthChange}
+                style={styles.hiddenSelect}
+              >
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - i);
+                  const m = d.getMonth() + 1;
+                  const y = d.getFullYear();
+                  return (
+                    <option key={i} value={`${m}-${y}`}>
+                      {d.toLocaleString('default', { month: 'long' })} {y}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
-            <div style={{...styles.pill, cursor: 'pointer'}}>
+
+            {/* VIEW MODE PILL (Top) */}
+            <div 
+              style={{...styles.pill, cursor: 'pointer'}}
+              onClick={() => setViewType(viewType === 'weekly' ? 'monthly' : 'weekly')}
+            >
               <LayoutDashboard size={16} color="#3b82f6" />
-              <span>{viewType === 'weekly' ? 'Weekly' : 'Monthly'}</span>
+              <span style={{textTransform: 'capitalize'}}>{viewType}</span>
               <ChevronDown size={14} />
             </div>
           </div>
 
+          {/* GRID: CHART & INCENTIVES */}
           <div style={styles.grid}>
+            
+            {/* Chart Card */}
             <div style={{...styles.card, gridColumn: 'span 8'}}>
               <div style={styles.cardHeader}>
                 <div>
@@ -98,8 +149,6 @@ const MyEarnings = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* 4. UPDATED BUTTONS WITH LOGIC */}
                 <div style={styles.toggleGroup}>
                   <button 
                     onClick={() => setViewType('weekly')}
@@ -116,7 +165,7 @@ const MyEarnings = () => {
                 </div>
               </div>
               
-              <div style={{height: '250px', width: '100%'}}>
+              <div style={{height: '250px', width: '100%', opacity: loading ? 0.5 : 1, transition: '0.3s'}}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={earningsData.chart_data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -129,6 +178,7 @@ const MyEarnings = () => {
               </div>
             </div>
 
+            {/* Incentives Checklist */}
             <div style={{...styles.card, gridColumn: 'span 4'}}>
               <h4 style={styles.cardTitle}>Current Incentives</h4>
               {earningsData.checklist.map((item, i) => (
@@ -154,6 +204,7 @@ const MyEarnings = () => {
             </div>
           </div>
 
+          {/* RECENT TABLE */}
           <div style={styles.tableCard}>
             <div style={styles.tableHeader}>Recent Payout History</div>
             <table style={styles.table}>
@@ -179,7 +230,7 @@ const MyEarnings = () => {
                   </tr>
                 ))}
                 {earningsData.recent_history.length === 0 && (
-                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px', color: '#94a3b8'}}>No recent payout records found.</td></tr>
+                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '40px', color: '#94a3b8'}}>No payout records for this period.</td></tr>
                 )}
               </tbody>
             </table>
@@ -190,6 +241,7 @@ const MyEarnings = () => {
   );
 };
 
+// --- SUB-COMPONENTS ---
 const NavItem = ({ icon, label, active }) => (
   <div style={{
     ...styles.navItem, 
@@ -202,9 +254,10 @@ const NavItem = ({ icon, label, active }) => (
   </div>
 );
 
+// --- THE STYLES OBJECT ---
 const styles = {
   page: { display: 'flex', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif" },
-  sidebar: { width: '240px', backgroundColor: '#1e293b', color: 'white', position: 'fixed', height: '100vh', left: 0, top: 0, display: 'flex', flexDirection: 'column' },
+  sidebar: { width: '240px', backgroundColor: '#1e293b', color: 'white', position: 'fixed', height: '100vh', left: 0, top: 0, display: 'flex', flexDirection: 'column', zIndex: 100 },
   sidebarHeader: { padding: '25px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', fontWeight: '800', color: '#3b82f6' },
   logoIcon: { width: '30px', height: '30px', background: '#3b82f6', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontStyle: 'italic' },
   navMenu: { padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '5px' },
@@ -217,6 +270,7 @@ const styles = {
   wrapper: { padding: '30px', maxWidth: '1200px', margin: '0 auto' },
   controlsRow: { display: 'flex', gap: '12px', marginBottom: '25px' },
   pill: { background: 'white', border: '1px solid #e2e8f0', padding: '8px 15px', borderRadius: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', color: '#64748b' },
+  hiddenSelect: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px', marginBottom: '20px' },
   card: { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' },
@@ -232,7 +286,7 @@ const styles = {
   toggleInactive: { border: 'none', background: 'transparent', padding: '6px 12px', color: '#94a3b8', fontSize: '0.7rem', cursor: 'pointer' },
   incentiveRow: { display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
   checkContainer: { display: 'flex', alignItems: 'center', gap: '10px' },
-  checkBox: { width: '18px', height: '18px', background: '#10b981', color: 'white', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  checkBox: { width: '18px', height: '18px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' },
   incentiveLabel: { fontSize: '0.85rem', fontWeight: '500', color: '#475569' },
   incentiveVal: { fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' },
   tableCard: { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' },
@@ -243,7 +297,8 @@ const styles = {
   tableRow: { borderBottom: '1px solid #f8fafc' },
   td: { padding: '15px 20px', fontSize: '0.85rem', color: '#64748b' },
   tdBold: { padding: '15px 20px', fontSize: '0.85rem', color: '#1e293b', fontWeight: '700' },
-  actionBtn: { background: '#3b82f6', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }
+  actionBtn: { background: '#3b82f6', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' },
+  loaderSpinner: { width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' },
 };
 
 export default MyEarnings;

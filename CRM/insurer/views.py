@@ -29,6 +29,8 @@ from django.db.models import Min, Case, When, Value, IntegerField
 from rest_framework.views import APIView
 from django.db.models.functions import TruncWeek
 from .serializers import IncentiveSerializer
+import calendar
+from datetime import date
 from django.db.models.functions import TruncWeek, TruncMonth
 
 
@@ -560,76 +562,72 @@ class AgentEarningsDashboardView(APIView):
 
     def get(self, request):
         agent = request.user
-        today = timezone.now().date()
-        first_day_curr_month = today.replace(day=1)
         
-        # 1. READ THE TOGGLE STATE
-        # This comes from your frontend: ?view=monthly or ?view=weekly
+        # 1. Get Parameters (Defaults to current date)
         view_type = request.query_params.get('view', 'weekly')
+        try:
+            target_month = int(request.query_params.get('month', timezone.now().month))
+            target_year = int(request.query_params.get('year', timezone.now().year))
+        except ValueError:
+            return Response({"error": "Invalid date parameters"}, status=400)
 
-        # 2. TOTALS (Always stay focused on the CURRENT month)
-        monthly_incentives_qs = Incentive.objects.filter(
+        # 2. Date Range Logic
+        # Get the first and last day of the selected month
+        last_day = calendar.monthrange(target_year, target_month)[1]
+        start_date = date(target_year, target_month, 1)
+        end_date = date(target_year, target_month, last_day)
+
+        # 3. Aggregations for the Selected Month
+        monthly_qs = Incentive.objects.filter(
             agent=agent,
-            date_earned__gte=first_day_curr_month
+            date_earned__range=[start_date, end_date]
         )
-        total_incentives = monthly_incentives_qs.aggregate(Sum('amount'))['amount__sum'] or 0
-        base_salary = getattr(agent, 'base_salary', 20000)
-        total_earnings = float(base_salary) + float(total_incentives)
-
-        # 3. DYNAMIC CHART LOGIC
-        chart_data = []
         
+        total_incentives = monthly_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+        base_salary = getattr(agent, 'base_salary', 20000)
+
+        # 4. Dynamic Chart Logic
         if view_type == 'monthly':
-            # Trend for the whole year
+            # Trend for the entire target year
             chart_qs = Incentive.objects.filter(
                 agent=agent, 
-                date_earned__year=today.year
+                date_earned__year=target_year
             ).annotate(month_point=TruncMonth('date_earned')) \
-             .values('month_point') \
-             .annotate(total=Sum('amount')) \
-             .order_by('month_point')
+             .values('month_point').annotate(total=Sum('amount')).order_by('month_point')
 
             chart_data = [
                 {"name": item['month_point'].strftime("%b"), "value": float(item['total'])} 
                 for item in chart_qs
             ]
         else:
-            # Trend for the current month weeks
-            chart_qs = monthly_incentives_qs.annotate(week_point=TruncWeek('date_earned')) \
-                .values('week_point') \
-                .annotate(total=Sum('amount')) \
-                .order_by('week_point')
+            # Trend for the weeks of the selected month
+            chart_qs = monthly_qs.annotate(week_point=TruncWeek('date_earned')) \
+                .values('week_point').annotate(total=Sum('amount')).order_by('week_point')
 
             chart_data = [
                 {"name": f"Week {i+1}", "value": float(item['total'])} 
                 for i, item in enumerate(chart_qs)
             ]
 
-        # Handle empty states
-        if not chart_data:
-            chart_data = [{"name": "No Data", "value": 0}]
-
-        # 4. CHECKLIST & HISTORY (Monthly Context)
-        earned_types = monthly_incentives_qs.values_list('type', flat=True)
+        # 5. Checklist & History (Contextual to selected month)
+        earned_types = monthly_qs.values_list('type', flat=True)
         checklist = [
             {"label": "Monthly Target Achieved", "amount": "₹3,000", "checked": 'monthly_target' in earned_types},
             {"label": "Weekly Bonus", "amount": "₹500", "checked": 'weekly_bonus' in earned_types},
             {"label": "Performance Bonus", "amount": "₹1,000", "checked": 'performance' in earned_types},
             {"label": "Login Bonus", "amount": "₹500", "checked": 'attendance' in earned_types},
         ]
-
-        recent_incentives = monthly_incentives_qs.order_by('-date_earned')[:5]
-        history_data = IncentiveSerializer(recent_incentives, many=True).data
+        
+        recent_history = IncentiveSerializer(monthly_qs.order_by('-date_earned')[:5], many=True).data
 
         return Response({
             "summary": {
-                "total_earnings": total_earnings,
+                "total_earnings": float(base_salary) + float(total_incentives),
                 "base_salary": float(base_salary),
                 "total_incentives": float(total_incentives),
-                "month": today.strftime("%B %Y"),
-                "view_mode": view_type
+                "month_display": start_date.strftime("%B %Y")
             },
-            "chart_data": chart_data,
+            "chart_data": chart_data if chart_data else [{"name": "No Data", "value": 0}],
             "checklist": checklist,
-            "recent_history": history_data
+            "recent_history": recent_history
         })
