@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from "../services/api"; // Assuming your api service is here
+import api from "../services/api"; 
 import { 
   LayoutDashboard, Users, PhoneCall, CheckSquare, 
   Wallet, Settings, Bell, ChevronDown, Calendar, 
@@ -10,11 +10,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const MyEarnings = () => {
   const [earningsData, setEarningsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // 1. New state to track the active toggle
+  const [viewType, setViewType] = useState('weekly'); 
 
   useEffect(() => {
     const fetchEarnings = async () => {
+      // We set loading to true so the user sees a refresh when switching modes
+      setLoading(true); 
       try {
-        const res = await api.get("agent/earnings-dashboard/");
+        // 2. Modified API call to include the view parameter
+        const res = await api.get(`agent/earnings-dashboard/?view=${viewType}`);
         setEarningsData(res.data);
       } catch (err) {
         console.error("Error fetching earnings data", err);
@@ -24,9 +30,9 @@ const MyEarnings = () => {
     };
 
     fetchEarnings();
-  }, []);
+  }, [viewType]); // 3. Re-run this effect every time viewType changes
 
-  if (loading) {
+  if (loading && !earningsData) {
     return (
       <div style={{...styles.page, justifyContent: 'center', alignItems: 'center', color: '#64748b'}}>
         <h3>Calculating Earnings...</h3>
@@ -34,13 +40,10 @@ const MyEarnings = () => {
     );
   }
 
-  // Fallback if data fails to load
   if (!earningsData) return <div>Error loading data. Please refresh.</div>;
 
   return (
     <div style={styles.page}>
-      
-      {/* SIDEBAR */}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
             <div style={styles.logoIcon}>PH</div>
@@ -56,10 +59,7 @@ const MyEarnings = () => {
         </nav>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main style={styles.mainContent}>
-        
-        {/* TOP HEADER */}
         <header style={styles.header}>
           <h2 style={styles.headerTitle}>My Earnings</h2>
           <div style={styles.headerIcons}>
@@ -69,8 +69,6 @@ const MyEarnings = () => {
         </header>
 
         <div style={styles.wrapper}>
-          
-          {/* CONTROLS */}
           <div style={styles.controlsRow}>
             <div style={styles.pill}>
               <Calendar size={16} color="#3b82f6" />
@@ -78,15 +76,12 @@ const MyEarnings = () => {
             </div>
             <div style={{...styles.pill, cursor: 'pointer'}}>
               <LayoutDashboard size={16} color="#3b82f6" />
-              <span>Monthly</span>
+              <span>{viewType === 'weekly' ? 'Weekly' : 'Monthly'}</span>
               <ChevronDown size={14} />
             </div>
           </div>
 
-          {/* GRID: CHART & INCENTIVES */}
           <div style={styles.grid}>
-            
-            {/* Chart Card - Dynamic */}
             <div style={{...styles.card, gridColumn: 'span 8'}}>
               <div style={styles.cardHeader}>
                 <div>
@@ -103,9 +98,21 @@ const MyEarnings = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* 4. UPDATED BUTTONS WITH LOGIC */}
                 <div style={styles.toggleGroup}>
-                  <button style={styles.toggleActive}>Weekly</button>
-                  <button style={styles.toggleInactive}>Monthly</button>
+                  <button 
+                    onClick={() => setViewType('weekly')}
+                    style={viewType === 'weekly' ? styles.toggleActive : styles.toggleInactive}
+                  >
+                    Weekly
+                  </button>
+                  <button 
+                    onClick={() => setViewType('monthly')}
+                    style={viewType === 'monthly' ? styles.toggleActive : styles.toggleInactive}
+                  >
+                    Monthly
+                  </button>
                 </div>
               </div>
               
@@ -122,7 +129,6 @@ const MyEarnings = () => {
               </div>
             </div>
 
-            {/* Incentives Card - Dynamic Checklist */}
             <div style={{...styles.card, gridColumn: 'span 4'}}>
               <h4 style={styles.cardTitle}>Current Incentives</h4>
               {earningsData.checklist.map((item, i) => (
@@ -148,7 +154,6 @@ const MyEarnings = () => {
             </div>
           </div>
 
-          {/* RECENT TABLE - Dynamic History */}
           <div style={styles.tableCard}>
             <div style={styles.tableHeader}>Recent Payout History</div>
             <table style={styles.table}>
@@ -185,9 +190,6 @@ const MyEarnings = () => {
   );
 };
 
-// ... NavItem and Styles remain exactly as you have them ...
-
-// --- SUB-COMPONENT FOR CLEANER NAV ---
 const NavItem = ({ icon, label, active }) => (
   <div style={{
     ...styles.navItem, 
@@ -200,50 +202,39 @@ const NavItem = ({ icon, label, active }) => (
   </div>
 );
 
-// --- THE STYLES OBJECT ---
 const styles = {
   page: { display: 'flex', backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif" },
-  
-  // Sidebar
   sidebar: { width: '240px', backgroundColor: '#1e293b', color: 'white', position: 'fixed', height: '100vh', left: 0, top: 0, display: 'flex', flexDirection: 'column' },
   sidebarHeader: { padding: '25px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', fontWeight: '800', color: '#3b82f6' },
   logoIcon: { width: '30px', height: '30px', background: '#3b82f6', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontStyle: 'italic' },
   navMenu: { padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '5px' },
   navItem: { padding: '12px 25px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: '600', transition: '0.2s' },
-  
-  // Content
   mainContent: { flex: 1, marginLeft: '240px' },
   header: { height: '60px', backgroundColor: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', color: 'white' },
   headerTitle: { fontSize: '1.1rem', fontWeight: '600', margin: 0 },
   headerIcons: { display: 'flex', alignItems: 'center', gap: '20px' },
   profileCircle: { width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' },
-  
   wrapper: { padding: '30px', maxWidth: '1200px', margin: '0 auto' },
   controlsRow: { display: 'flex', gap: '12px', marginBottom: '25px' },
   pill: { background: 'white', border: '1px solid #e2e8f0', padding: '8px 15px', borderRadius: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', color: '#64748b' },
-  
   grid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px', marginBottom: '20px' },
   card: { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' },
   cardTitle: { margin: '0 0 20px 0', fontSize: '0.9rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase' },
-  
   labelSmall: { fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' },
   earningsValue: { fontSize: '2rem', fontWeight: '900', color: '#1e3a8a', margin: '5px 0' },
   subStats: { display: 'flex', gap: '30px', marginTop: '15px' },
   labelExtraSmall: { fontSize: '0.6rem', color: '#cbd5e1', fontWeight: '800' },
   salaryText: { margin: 0, fontWeight: '700', color: '#f97316', fontSize: '1rem' },
   incentiveText: { margin: 0, fontWeight: '700', color: '#1e293b', fontSize: '1rem' },
-  
   toggleGroup: { background: '#f1f5f9', padding: '4px', borderRadius: '8px', height: 'fit-content' },
   toggleActive: { border: 'none', background: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '800', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', cursor: 'pointer' },
   toggleInactive: { border: 'none', background: 'transparent', padding: '6px 12px', color: '#94a3b8', fontSize: '0.7rem', cursor: 'pointer' },
-
   incentiveRow: { display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
   checkContainer: { display: 'flex', alignItems: 'center', gap: '10px' },
   checkBox: { width: '18px', height: '18px', background: '#10b981', color: 'white', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   incentiveLabel: { fontSize: '0.85rem', fontWeight: '500', color: '#475569' },
   incentiveVal: { fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' },
-
   tableCard: { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' },
   tableHeader: { padding: '20px', fontWeight: '800', fontSize: '0.9rem', color: '#1e293b', borderBottom: '1px solid #f1f5f9' },
   table: { width: '100%', borderCollapse: 'collapse' },
