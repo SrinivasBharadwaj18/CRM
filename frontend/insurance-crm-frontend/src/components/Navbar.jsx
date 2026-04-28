@@ -1,15 +1,18 @@
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
+import { 
+  LayoutDashboard, Users, PhoneCall, CheckSquare, 
+  Wallet, Settings, LogOut 
+} from "lucide-react";
 
 function Navbar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  // Accessing auth state safely
+  const location = useLocation();
   const { user } = useSelector((state) => state.auth || {});
 
-  // Roles based on your Django response
   const isManagement = user?.role === 'owner' || user?.role === 'lead';
   const isAgent = user?.role === 'agent';
 
@@ -18,65 +21,55 @@ function Navbar() {
     navigate("/", { replace: true });
   };
 
-  // Logic to determine where the "Logo" or "Home" should go
-  const getHomePath = () => {
-    if (isManagement) return "/admin";
-    if (isAgent) return "/agent/leads";
-    return "/";
-  };
+  const isActive = (path) => location.pathname === path;
 
-  return (
-    <nav style={styles.nav}>
-      <div style={styles.container}>
-        {/* LOGO SECTION */}
-        <div style={styles.logoGroup}>
-          <Link to={getHomePath()} style={styles.logo}>
-            CRM<span style={{ color: "#3b82f6" }}>PRO</span>
-          </Link>
-          {user?.role && (
-            <span style={isManagement ? styles.adminBadge : styles.agentBadge}>
-              {user.role.toUpperCase()}
-            </span>
-          )}
+  // --- RENDER 1: AGENT SIDEBAR ---
+  if (isAgent) {
+    return (
+      <aside style={styles.sidebar}>
+        <div style={styles.logoSection}>
+          <div style={styles.logoCircle}>PH</div>
+          <h1 style={styles.logoText}>Agent CRM</h1>
         </div>
 
-        {/* NAVIGATION LINKS */}
-        <div style={styles.links}>
+        <nav style={styles.navMenu}>
+          <SidebarItem to="/agent/home" icon={<LayoutDashboard size={20} />} label="Dashboard" active={isActive("/agent/home")} />
+          <SidebarItem to="/agent/leads" icon={<Users size={20} />} label="Leads" active={isActive("/agent/leads")} />
+          <SidebarItem to="/agent/calls" icon={<PhoneCall size={20} />} label="Call History" active={isActive("/agent/calls")} />
+          <SidebarItem to="/agent/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={isActive("/agent/tasks")} />
+          <SidebarItem to="/agent/earnings" icon={<Wallet size={20} />} label="My Earnings" active={isActive("/agent/earnings")} />
           
-          {/* ADMIN LINKS */}
-          {isManagement && (
-            <>
-              <Link style={styles.link} to="/admin">Dashboard</Link>
-              <Link style={styles.link} to="/admin/create-agent">Create User</Link>
-              <Link style={styles.link} to="/admin/upload-leads">Upload Leads</Link>
-              
-              <a 
-                style={styles.toolLink} 
-                href="/admin/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                Django Admin ⚙️
-              </a>
-            </>
-          )}
-          
-          {/* AGENT LINKS */}
-          {isAgent && (
-            <>
-              <Link style={styles.link} to="/agent/leads">My Leads</Link>
-              <Link style={styles.link} to="/agent/home">Dashbaord</Link>
-              {/* If you have a specific AgentHome page, you can add it here */}
-            </>
-          )}
+          <div style={{ marginTop: 'auto' }}>
+            <SidebarItem to="/settings" icon={<Settings size={20} />} label="Settings" active={isActive("/settings")} />
+            <button onClick={handleLogout} style={styles.logoutBtnSidebar}>
+              <LogOut size={20} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+    );
+  }
 
-          {/* USER INFO & LOGOUT */}
+  // --- RENDER 2: ADMIN HORIZONTAL NAVBAR ---
+  return (
+    <nav style={styles.topNav}>
+      <div style={styles.topContainer}>
+        <div style={styles.logoGroup}>
+          <Link to="/admin" style={styles.logo}>CRM<span style={{ color: "#3b82f6" }}>PRO</span></Link>
+          <span style={styles.adminBadge}>ADMIN</span>
+        </div>
+
+        <div style={styles.topLinks}>
+          <Link style={styles.topLink} to="/admin">Dashboard</Link>
+          <Link style={styles.topLink} to="/admin/create-agent">Employee Mgmt</Link>
+          <Link style={styles.topLink} to="/admin/upload-leads">Upload Leads</Link>
+          
           <div style={styles.userSection}>
             <div style={styles.userInfo}>
-               <span style={styles.userName}>{user?.name || user?.username || "User"}</span>
-               <span style={styles.userRole}>{user?.role}</span>
+              <span style={styles.userName}>{user?.name || "Admin"}</span>
+              <button onClick={handleLogout} style={styles.logoutBtnTop}>Logout</button>
             </div>
-            <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
           </div>
         </div>
       </div>
@@ -84,62 +77,50 @@ function Navbar() {
   );
 }
 
+// --- SIDEBAR ITEM (Agent Only) ---
+const SidebarItem = ({ to, icon, label, active }) => {
+  const [hover, setHover] = useState(false);
+
+  return (
+    <Link 
+      to={to} 
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        ...styles.navItem,
+        color: (active || hover) ? "#fff" : "#94a3b8", // Only text/icon changes color
+        borderLeft: active ? "4px solid #3b82f6" : "4px solid transparent",
+      }}
+    >
+      {icon}
+      <span style={{ fontWeight: active ? "700" : "500" }}>{label}</span>
+    </Link>
+  );
+};
+
+// --- STYLES ---
 const styles = {
-  nav: { 
-    backgroundColor: "#0f172a", 
-    height: "70px", 
-    position: "fixed", 
-    top: 0, 
-    width: "100%", 
-    zIndex: 1000, 
-    display: "flex", 
-    alignItems: "center", 
-    boxShadow: "0 2px 10px rgba(0,0,0,0.3)" 
-  },
-  container: { 
-    width: "100%", 
-    maxWidth: "1400px", 
-    margin: "0 auto", 
-    padding: "0 24px", 
-    display: "flex", 
-    justifyContent: "space-between", 
-    alignItems: "center" 
-  },
+  // AGENT SIDEBAR STYLES
+  sidebar: { width: "260px", backgroundColor: "#1e293b", height: "100vh", position: "fixed", left: 0, top: 0, display: "flex", flexDirection: "column", zIndex: 1000 },
+  logoSection: { padding: "30px 24px", display: "flex", alignItems: "center", gap: "12px" },
+  logoCircle: { width: "35px", height: "35px", borderRadius: "50%", backgroundColor: "#3b82f6", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" },
+  logoText: { color: "#fff", fontSize: "1.1rem", fontWeight: "800", margin: 0 },
+  navMenu: { flex: 1, display: "flex", flexDirection: "column", padding: "10px 0" },
+  navItem: { display: "flex", alignItems: "center", gap: "15px", padding: "12px 24px", textDecoration: "none", fontSize: "0.95rem", transition: "color 0.2s ease" },
+  logoutBtnSidebar: { width: "100%", display: "flex", alignItems: "center", gap: "15px", padding: "15px 24px", backgroundColor: "transparent", color: "#f87171", border: "none", cursor: "pointer", fontSize: "0.95rem", fontWeight: "600" },
+
+  // ADMIN TOP NAV STYLES
+  topNav: { backgroundColor: "#0f172a", height: "70px", position: "fixed", top: 0, width: "100%", zIndex: 1000, display: "flex", alignItems: "center" },
+  topContainer: { width: "100%", maxWidth: "1400px", margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center" },
   logoGroup: { display: "flex", alignItems: "center", gap: "12px" },
-  logo: { color: "white", fontSize: "1.4rem", fontWeight: "900", textDecoration: "none", letterSpacing: "-1px" },
+  logo: { color: "white", fontSize: "1.4rem", fontWeight: "900", textDecoration: "none" },
   adminBadge: { backgroundColor: "#fef2f2", color: "#ef4444", padding: "2px 8px", borderRadius: "4px", fontSize: "0.65rem", fontWeight: "800" },
-  agentBadge: { backgroundColor: "#eff6ff", color: "#3b82f6", padding: "2px 8px", borderRadius: "4px", fontSize: "0.65rem", fontWeight: "800" },
-  links: { display: "flex", alignItems: "center", gap: "25px" },
-  link: { color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600", transition: "color 0.2s" },
-  toolLink: { 
-    color: "#fbbf24", 
-    textDecoration: "none", 
-    fontSize: "0.9rem", 
-    fontWeight: "700",
-    padding: "6px 12px",
-    borderRadius: "6px",
-    backgroundColor: "rgba(251, 191, 36, 0.1)",
-  },
-  userSection: { 
-    display: "flex", 
-    alignItems: "center", 
-    gap: "15px", 
-    borderLeft: "1px solid rgba(255,255,255,0.1)", 
-    paddingLeft: "20px" 
-  },
-  userInfo: { display: "flex", flexDirection: "column", alignItems: "flex-end" },
+  topLinks: { display: "flex", alignItems: "center", gap: "25px" },
+  topLink: { color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600" },
+  userSection: { borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: "20px" },
+  userInfo: { display: "flex", alignItems: "center", gap: "15px" },
   userName: { color: "white", fontSize: "0.85rem", fontWeight: "600" },
-  userRole: { color: "#94a3b8", fontSize: "0.7rem", textTransform: "capitalize" },
-  logoutBtn: { 
-    backgroundColor: "#ef4444", 
-    color: "white", 
-    border: "none", 
-    padding: "8px 16px", 
-    borderRadius: "8px", 
-    fontWeight: "700", 
-    cursor: "pointer",
-    transition: "opacity 0.2s"
-  }
+  logoutBtnTop: { backgroundColor: "#ef4444", color: "white", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "700", cursor: "pointer" }
 };
 
 export default Navbar;
