@@ -23,7 +23,7 @@ function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
-  // --- RENDER 1: AGENT SIDEBAR ---
+  // --- RENDER: AGENT SIDEBAR ---
   if (isAgent) {
     return (
       <aside style={styles.sidebar}>
@@ -39,7 +39,7 @@ function Navbar() {
           <SidebarItem to="/agent/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={isActive("/agent/tasks")} />
           <SidebarItem to="/agent/earnings" icon={<Wallet size={20} />} label="My Earnings" active={isActive("/agent/earnings")} />
           
-          <div style={{ marginTop: 'auto' }}>
+          <div style={{ marginTop: 'auto', paddingBottom: '20px' }}>
             <SidebarItem to="/settings" icon={<Settings size={20} />} label="Settings" active={isActive("/settings")} />
             <button onClick={handleLogout} style={styles.logoutBtnSidebar}>
               <LogOut size={20} />
@@ -51,44 +51,48 @@ function Navbar() {
     );
   }
 
-  // --- RENDER 2: ADMIN HORIZONTAL NAVBAR ---
-  return (
-    <nav style={styles.topNav}>
-      <div style={styles.topContainer}>
-        <div style={styles.logoGroup}>
-          <Link to="/admin" style={styles.logo}>CRM<span style={{ color: "#3b82f6" }}>PRO</span></Link>
-          <span style={styles.adminBadge}>ADMIN</span>
-        </div>
+  // --- RENDER: ADMIN TOP NAVBAR ---
+  if (isManagement) {
+    return (
+      <nav style={styles.topNav}>
+        <div style={styles.topContainer}>
+          <div style={styles.logoGroup}>
+            <Link to="/admin" style={styles.logo}>CRM<span style={{ color: "#3b82f6" }}>PRO</span></Link>
+            <span style={styles.adminBadge}>ADMIN</span>
+          </div>
 
-        <div style={styles.topLinks}>
-          <Link style={styles.topLink} to="/admin">Dashboard</Link>
-          <Link style={styles.topLink} to="/admin/create-agent">Employee Mgmt</Link>
-          <Link style={styles.topLink} to="/admin/upload-leads">Upload Leads</Link>
-          
-          <div style={styles.userSection}>
-            <div style={styles.userInfo}>
-              <span style={styles.userName}>{user?.name || "Admin"}</span>
-              <button onClick={handleLogout} style={styles.logoutBtnTop}>Logout</button>
+          <div style={styles.topLinks}>
+            <Link style={styles.topLink} to="/admin">Dashboard</Link>
+            <Link style={styles.topLink} to="/admin/create-agent">Employee Mgmt</Link>
+            <Link style={styles.topLink} to="/admin/upload-leads">Upload Leads</Link>
+            
+            <div style={styles.userSection}>
+              <div style={styles.userInfo}>
+                <span style={styles.userName}>{user?.name || "Admin"}</span>
+                <button onClick={handleLogout} style={styles.logoutBtnTop}>Logout</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </nav>
-  );
+      </nav>
+    );
+  }
+
+  return null;
 }
 
-// --- SIDEBAR ITEM (Agent Only) ---
+// --- SUB-COMPONENT: SIDEBAR ITEM (Hover Logic Included) ---
 const SidebarItem = ({ to, icon, label, active }) => {
-  const [hover, setHover] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <Link 
       to={to} 
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         ...styles.navItem,
-        color: (active || hover) ? "#fff" : "#94a3b8", // Only text/icon changes color
+        color: (active || isHovered) ? "#fff" : "#94a3b8", // Text/Icon color change only
         borderLeft: active ? "4px solid #3b82f6" : "4px solid transparent",
       }}
     >
@@ -100,7 +104,7 @@ const SidebarItem = ({ to, icon, label, active }) => {
 
 // --- STYLES ---
 const styles = {
-  // AGENT SIDEBAR STYLES
+  // SIDEBAR (Agent)
   sidebar: { width: "260px", backgroundColor: "#1e293b", height: "100vh", position: "fixed", left: 0, top: 0, display: "flex", flexDirection: "column", zIndex: 1000 },
   logoSection: { padding: "30px 24px", display: "flex", alignItems: "center", gap: "12px" },
   logoCircle: { width: "35px", height: "35px", borderRadius: "50%", backgroundColor: "#3b82f6", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" },
@@ -109,7 +113,7 @@ const styles = {
   navItem: { display: "flex", alignItems: "center", gap: "15px", padding: "12px 24px", textDecoration: "none", fontSize: "0.95rem", transition: "color 0.2s ease" },
   logoutBtnSidebar: { width: "100%", display: "flex", alignItems: "center", gap: "15px", padding: "15px 24px", backgroundColor: "transparent", color: "#f87171", border: "none", cursor: "pointer", fontSize: "0.95rem", fontWeight: "600" },
 
-  // ADMIN TOP NAV STYLES
+  // TOP NAV (Admin)
   topNav: { backgroundColor: "#0f172a", height: "70px", position: "fixed", top: 0, width: "100%", zIndex: 1000, display: "flex", alignItems: "center" },
   topContainer: { width: "100%", maxWidth: "1400px", margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center" },
   logoGroup: { display: "flex", alignItems: "center", gap: "12px" },
