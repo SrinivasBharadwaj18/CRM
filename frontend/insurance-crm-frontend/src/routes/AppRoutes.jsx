@@ -11,7 +11,7 @@ import UploadLeads from "../pages/UploadLeads";
 import Leads from "../pages/Leads.jsx";
 import Dashboard from "../pages/AgentHome"
 import MyEarnings from "../pages/MyEarnings.jsx";
-import AdminFinance from "../pages/AdminFincance.jsx";
+import AdminFinance from "../pages/AdminFinance.jsx";
 
 function AppRoutes() {
   return (
