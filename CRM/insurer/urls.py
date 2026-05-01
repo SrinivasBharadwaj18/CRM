@@ -22,6 +22,8 @@ from .views import (
     get_all_agents,
     AgentEarningsDashboardView
 )
+from django.urls import path, re_path, include
+from django.views.generic import TemplateView
 
 urlpatterns = [
 
@@ -59,6 +61,8 @@ urlpatterns = [
     path("agent/<int:id>/mark-paid/",mark_as_paid, name="mark_paid"),
 
     path('agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
+
+    re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 
 
 ]
