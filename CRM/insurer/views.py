@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Count, Q, Sum, F
 from django.shortcuts import get_object_or_404
-
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -555,6 +555,64 @@ def mark_as_paid(request, id):
     })
 
 
+@api_view(['PATCH']) # PATCH is used for partial updates
+@permission_classes([IsAuthenticated])
+def update_agent_salary(request, agent_id):
+    # Security check
+    if request.user.role not in ['owner', 'lead']:
+        return Response({"error": "Unauthorized"}, status=403)
+
+    try:
+        # Find the agent
+        agent = Employee.objects.get(id=agent_id, role='agent')
+        new_salary = request.data.get('base_salary')
+
+        if new_salary is not None:
+            agent.base_salary = new_salary
+            agent.save()
+            return Response({"message": f"Salary updated to ₹{new_salary} for {agent.username}"})
+        
+        return Response({"error": "Salary value is required"}, status=400)
+
+    except Employee.DoesNotExist:
+        return Response({"error": "Agent not found"}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_award_incentive(request):
+    # 1. Security Check
+    if request.user.role not in ['owner', 'lead']:
+        return Response({"error": "Only admins can award incentives"}, status=status.HTTP_403_FORBIDDEN)
+
+    # 2. Data Extraction
+    agent_id = request.data.get('agent_id')
+    amount = request.data.get('amount')
+    incentive_type = request.data.get('type') # e.g., 'performance', 'weekly_bonus'
+    note = request.data.get('note', '') # Optional comment
+
+    # 3. Validation
+    if not all([agent_id, amount, incentive_type]):
+        return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        agent = Employee.objects.get(id=agent_id, role='agent')
+        
+        # 4. Create the Record
+        incentive = Incentive.objects.create(
+            agent=agent,
+            amount=amount,
+            type=incentive_type,
+            date_earned=timezone.now().date()
+        )
+        
+        return Response({
+            "message": f"Successfully awarded ₹{amount} to {agent.username}",
+            "id": incentive.id
+        }, status=status.HTTP_201_CREATED)
+
+    except Employee.DoesNotExist:
+        return Response({"error": "Agent not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AgentEarningsDashboardView(APIView):
@@ -631,3 +689,68 @@ class AgentEarningsDashboardView(APIView):
             "checklist": checklist,
             "recent_history": recent_history
         })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_agents(request):
+    # Security check: Only owners and leads should see the full agent list
+    if request.user.role not in ['owner', 'lead']:
+        return Response({"error": "Unauthorized"}, status=403)
+
+    # Filter to only get users with the 'agent' role
+    # Using 'Employee' model as per your previous snippet
+    agents = Employee.objects.filter(role='agent').values('id', 'username', 'name', 'base_salary')
+    
+    return Response(agents, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_admin_payout_history(request):
+    # Security check: Only owners/leads
+    if request.user.role not in ['owner', 'lead']:
+        return Response({"error": "Unauthorized"}, status=403)
+
+    # select_related('agent') makes this fast by joining the tables in one query
+    history = Incentive.objects.select_related('agent').all().order_by('-date_earned', '-id')
+    
+    data = []
+    for item in history:
+        data.append({
+            "id": item.id,
+            "agent_name": item.agent.name or item.agent.username,
+            "amount": float(item.amount),
+            "type": item.type.replace('_', ' ').title(), # Formats 'weekly_bonus' to 'Weekly Bonus'
+            "date": item.date_earned.strftime("%d %b %Y")
+        })
+    
+    return Response(data, status=200)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_finance_summary(request):
+    if request.user.role not in ['owner', 'lead']:
+        return Response({"error": "Unauthorized"}, status=403)
+
+    # 1. Calculate Total Base Salaries (fixed cost)
+    total_base_salaries = Employee.objects.filter(role='agent').aggregate(Sum('base_salary'))['base_salary__sum'] or 0
+
+    # 2. Calculate Monthly Incentives (variable cost)
+    today = timezone.now().date()
+    start_date = today.replace(day=1)
+    last_day = calendar.monthrange(today.year, today.month)[1]
+    end_date = today.replace(day=last_day)
+
+    total_incentives = Incentive.objects.filter(
+        date_earned__range=[start_date, end_date]
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+    return Response({
+        "total_base_salaries": float(total_base_salaries),
+        "total_incentives": float(total_incentives),
+        "grand_total": float(total_base_salaries + total_incentives),
+        "month_name": today.strftime("%B %Y")
+    })

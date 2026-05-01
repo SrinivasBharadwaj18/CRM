@@ -65,6 +65,7 @@ function Navbar() {
             <Link style={styles.topLink} to="/admin">Dashboard</Link>
             <Link style={styles.topLink} to="/admin/create-agent">Employee Mgmt</Link>
             <Link style={styles.topLink} to="/admin/upload-leads">Upload Leads</Link>
+            <Link style={styles.link} to="/admin/finance">Payroll & Incentives</Link>
             
             <div style={styles.userSection}>
               <div style={styles.userInfo}>

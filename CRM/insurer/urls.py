@@ -17,6 +17,9 @@ from .views import (
     check_in,
     close_lead,
     mark_as_paid,
+    update_agent_salary,
+    admin_award_incentive,
+    get_all_agents,
     AgentEarningsDashboardView
 )
 
@@ -33,6 +36,9 @@ urlpatterns = [
     path("admin/upload-leads/", upload_leads, name="upload_leads"),
     path("admin/mega-dashboard/",admin_mega_dashboard, name="admin_dashboard" ),
     path('admin/current-score/', admin_current_score, name='admin_current_score'),
+    path('admin/agents/', get_all_agents, name='list-agents'), # Need this for the dropdowns
+    path('admin/update-salary/<int:agent_id>/', update_agent_salary, name='update-salary'),
+    path('admin/award-incentive/', admin_award_incentive, name='award-incentive'),
 
     path("agent/leads/",agent_leads, name="agent_leads"),
 
@@ -53,4 +59,6 @@ urlpatterns = [
     path("agent/<int:id>/mark-paid/",mark_as_paid, name="mark_paid"),
 
     path('agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
+
+
 ]

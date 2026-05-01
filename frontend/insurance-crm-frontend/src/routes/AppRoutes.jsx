@@ -29,6 +29,9 @@ function AppRoutes() {
         <Route path="/admin/upload-leads" element={
           <ProtectedRoute role="owner"><MainLayout><UploadLeads /></MainLayout></ProtectedRoute>
         } />
+        <Route path="/admin/finance" element={
+          <ProtectedRoute role="owner"><MainLayout><AdminFinance /></MainLayout></ProtectedRoute>
+        } />
 
         {/* Agent Routes - Wrapped in MainLayout */}
         <Route path="/agent/home" element={
