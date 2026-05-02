@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import { 
   LayoutDashboard, Users, PhoneCall, CheckSquare, 
-  Wallet, Settings, LogOut 
+  Wallet, Settings, LogOut, Landmark
 } from "lucide-react";
 
 function Navbar() {
@@ -36,6 +36,7 @@ function Navbar() {
           <SidebarItem to="/agent/home" icon={<LayoutDashboard size={20} />} label="Dashboard" active={isActive("/agent/home")} />
           <SidebarItem to="/agent/leads" icon={<Users size={20} />} label="Leads" active={isActive("/agent/leads")} />
           <SidebarItem to="/agent/calls" icon={<PhoneCall size={20} />} label="Call History" active={isActive("/agent/calls")} />
+          {/* Linked to our new Task Dashboard */}
           <SidebarItem to="/agent/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={isActive("/agent/tasks")} />
           <SidebarItem to="/agent/earnings" icon={<Wallet size={20} />} label="My Earnings" active={isActive("/agent/earnings")} />
           
@@ -62,10 +63,13 @@ function Navbar() {
           </div>
 
           <div style={styles.topLinks}>
-            <Link style={styles.topLink} to="/admin">Dashboard</Link>
-            <Link style={styles.topLink} to="/admin/create-agent">Employee Mgmt</Link>
-            <Link style={styles.topLink} to="/admin/upload-leads">Upload Leads</Link>
-            <Link style={styles.link} to="/admin/finance">Payroll & Incentives</Link>
+            <Link style={isActive("/admin") ? styles.topLinkActive : styles.topLink} to="/admin">Dashboard</Link>
+            <Link style={isActive("/admin/create-agent") ? styles.topLinkActive : styles.topLink} to="/admin/create-agent">Employee Mgmt</Link>
+            <Link style={isActive("/admin/upload-leads") ? styles.topLinkActive : styles.topLink} to="/admin/upload-leads">Upload Leads</Link>
+            {/* Fixed the style reference here from .link to .topLink */}
+            <Link style={isActive("/admin/finance") ? styles.topLinkActive : styles.topLink} to="/admin/finance">
+               Payroll & Incentives
+            </Link>
             
             <div style={styles.userSection}>
               <div style={styles.userInfo}>
@@ -82,7 +86,7 @@ function Navbar() {
   return null;
 }
 
-// --- SUB-COMPONENT: SIDEBAR ITEM (Hover Logic Included) ---
+// --- SUB-COMPONENT: SIDEBAR ITEM ---
 const SidebarItem = ({ to, icon, label, active }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -93,8 +97,9 @@ const SidebarItem = ({ to, icon, label, active }) => {
       onMouseLeave={() => setIsHovered(false)}
       style={{
         ...styles.navItem,
-        color: (active || isHovered) ? "#fff" : "#94a3b8", // Text/Icon color change only
+        color: (active || isHovered) ? "#fff" : "#94a3b8",
         borderLeft: active ? "4px solid #3b82f6" : "4px solid transparent",
+        backgroundColor: active ? "rgba(59, 130, 246, 0.1)" : "transparent"
       }}
     >
       {icon}
@@ -111,7 +116,7 @@ const styles = {
   logoCircle: { width: "35px", height: "35px", borderRadius: "50%", backgroundColor: "#3b82f6", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" },
   logoText: { color: "#fff", fontSize: "1.1rem", fontWeight: "800", margin: 0 },
   navMenu: { flex: 1, display: "flex", flexDirection: "column", padding: "10px 0" },
-  navItem: { display: "flex", alignItems: "center", gap: "15px", padding: "12px 24px", textDecoration: "none", fontSize: "0.95rem", transition: "color 0.2s ease" },
+  navItem: { display: "flex", alignItems: "center", gap: "15px", padding: "12px 24px", textDecoration: "none", fontSize: "0.95rem", transition: "all 0.2s ease" },
   logoutBtnSidebar: { width: "100%", display: "flex", alignItems: "center", gap: "15px", padding: "15px 24px", backgroundColor: "transparent", color: "#f87171", border: "none", cursor: "pointer", fontSize: "0.95rem", fontWeight: "600" },
 
   // TOP NAV (Admin)
@@ -121,7 +126,8 @@ const styles = {
   logo: { color: "white", fontSize: "1.4rem", fontWeight: "900", textDecoration: "none" },
   adminBadge: { backgroundColor: "#fef2f2", color: "#ef4444", padding: "2px 8px", borderRadius: "4px", fontSize: "0.65rem", fontWeight: "800" },
   topLinks: { display: "flex", alignItems: "center", gap: "25px" },
-  topLink: { color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600" },
+  topLink: { color: "#cbd5e1", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600", transition: "color 0.2s" },
+  topLinkActive: { color: "#3b82f6", textDecoration: "none", fontSize: "0.9rem", fontWeight: "800" },
   userSection: { borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: "20px" },
   userInfo: { display: "flex", alignItems: "center", gap: "15px" },
   userName: { color: "white", fontSize: "0.85rem", fontWeight: "600" },
