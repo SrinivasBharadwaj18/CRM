@@ -27,7 +27,7 @@ axiosInstance.interceptors.response.use(
       if (refreshToken && refreshToken !== "undefined") {
         try {
           // Use a fresh axios call here, NOT axiosInstance
-          const response = await axios.post("/api/token/refresh/", {
+          const response = await axios.post("token/refresh/", {
             refresh: refreshToken,
           });
 
