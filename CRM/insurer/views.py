@@ -709,7 +709,7 @@ def get_all_agents(request):
 
         # 2. Fetch agents
         # We wrap this in a list() to force the database query to happen NOW
-        agents_queryset = Employee.objects.filter(role='agent').values('id', 'username', 'name', 'base_salary')
+        agents_queryset = Employee.objects.filter(role='agent').values('emp_id', 'username', 'name', 'base_salary')
         agents_list = list(agents_queryset)
         
         print(f"--- DEBUG: Successfully found {len(agents_list)} agents ---")
