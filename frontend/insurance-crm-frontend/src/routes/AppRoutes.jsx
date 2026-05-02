@@ -12,6 +12,7 @@ import Leads from "../pages/Leads.jsx";
 import Dashboard from "../pages/AgentHome"
 import MyEarnings from "../pages/MyEarnings.jsx";
 import AdminFinance from "../pages/AdminFinance.jsx";
+import AgentTaskDashboard from "../pages/AgentTaskDashboard.jsx";
 
 function AppRoutes() {
   return (
@@ -53,6 +54,10 @@ function AppRoutes() {
         <Route path="/agent/earnings" element={
           <ProtectedRoute role="agent"><MainLayout><MyEarnings /></MainLayout></ProtectedRoute>
         } />
+         <Route path="/agent/tasks" element={
+          <ProtectedRoute role="agent"><MainLayout><AgentTaskDashboard/></MainLayout></ProtectedRoute>
+        } />       
+
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
