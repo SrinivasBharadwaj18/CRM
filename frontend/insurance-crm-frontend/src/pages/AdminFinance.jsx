@@ -14,7 +14,7 @@ const AdminFinance = () => {
 
   const fetchSummary = async () => {
     try {
-      const res = await api.get("admin/finance-summary/");
+      const res = await api.get("api/admin/finance-summary/");
       setSummary(res.data);
     } catch (err) {
       console.error("Error fetching finance summary", err);
