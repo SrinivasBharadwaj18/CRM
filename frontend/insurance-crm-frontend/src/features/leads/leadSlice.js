@@ -4,7 +4,7 @@ import api from "../../services/api";
 export const fetchLeads = createAsyncThunk(
   "leads/fetchLeads",
   async () => {
-    const res = await api.get("agent/leads");
+    const res = await api.get("api/agent/leads/");
     return res.data; // This is the [18] items from your console
   }
 );

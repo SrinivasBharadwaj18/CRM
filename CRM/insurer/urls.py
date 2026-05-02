@@ -26,46 +26,34 @@ from .views import (
 from django.urls import path, re_path, include
 from django.views.generic import TemplateView
 
+# insurer/urls.py
+
 urlpatterns = [
+    # Authentication (Now becomes /api/user/login)
+    path("user/login", Login.as_view(), name="login"),
+    path("token/refresh", TokenRefreshView.as_view(), name="token_refresh"),
 
-    # Authentication
-    path("api/user/login", Login.as_view(), name="login"),
-    path("api/token/refresh", TokenRefreshView.as_view(), name="token_refresh"),
+    # Admin APIs (Now becomes /api/admin/...)
+    path("admin/create-user", create_employee, name="create_employee"),
+    path("admin/employees", view_employees, name="view_employees"),
+    path("admin/upload-leads/", upload_leads, name="upload_leads"),
+    path("admin/mega-dashboard/", admin_mega_dashboard, name="admin_dashboard"),
+    path('admin/current-score/', admin_current_score, name='admin_current_score'),
+    path('admin/agents/', get_all_agents, name='list-agents'),
+    path('admin/update-salary/<int:agent_id>/', update_agent_salary, name='update-salary'),
+    path('admin/award-incentive/', admin_award_incentive, name='award-incentive'),
 
-    path("api/django-portal/", admin.site.urls),
+    # Agent APIs
+    path("agent/leads/", agent_leads, name="agent_leads"),
+    path("leads/<int:id>/", lead_detail, name="lead_detail"),
+    path("agent/<int:id>/process/", process_lead, name="process_lead"),
+    path("agent/<int:id>/await/", await_lead, name="await_lead"),
+    path("agent/dashboard-stats/", agent_dashboard_stats, name="agent_dashboard_stats"),
+    path("agent/check-in/", check_in, name="check_in"),
+    path("agent/<int:id>/close/", close_lead, name="close_lead" ),
+    path("agent/<int:id>/mark-paid/", mark_as_paid, name="mark_paid"),
+    path('agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
 
-
-    # Admin APIs
-    path("api/admin/create-user", create_employee, name="create_employee"),
-    path("api/admin/employees", view_employees, name="view_employees"),
-    path("api/admin/upload-leads/", upload_leads, name="upload_leads"),
-    path("api/admin/mega-dashboard/",admin_mega_dashboard, name="admin_dashboard" ),
-    path('api/admin/current-score/', admin_current_score, name='admin_current_score'),
-    path('api/admin/agents/', get_all_agents, name='list-agents'), # Need this for the dropdowns
-    path('api/admin/update-salary/<int:agent_id>/', update_agent_salary, name='update-salary'),
-    path('api/admin/award-incentive/', admin_award_incentive, name='award-incentive'),
-
-    path("api/agent/leads/",agent_leads, name="agent_leads"),
-
-    path("api/leads/<int:id>/",lead_detail, name="lead_detail"),
-
-    path("api/agent/<int:id>/process/",process_lead, name="process_lead"),
-
-    path("api/agent/<int:id>/await/",await_lead, name="await_lead"),
-
-    path("api/agent/<int:id>/log-call/", log_call, name="log_call"),
-
-    path("api/agent/dashboard-stats/", agent_dashboard_stats, name="agent_dashboard_stats"),
-
-    path("api/agent/check-in/", check_in, name="check_in"),
-
-    path("api/agent/<int:id>/close/",close_lead, name="close_lead" ),
-
-    path("api/agent/<int:id>/mark-paid/",mark_as_paid, name="mark_paid"),
-
-    path('api/agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
-
+    # Catch-all MUST stay at the very bottom
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
-
-
 ]
