@@ -53,7 +53,5 @@ urlpatterns = [
     path("agent/<int:id>/close/", close_lead, name="close_lead" ),
     path("agent/<int:id>/mark-paid/", mark_as_paid, name="mark_paid"),
     path('agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
-
-    # Catch-all MUST stay at the very bottom
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 ]
