@@ -598,23 +598,26 @@ def update_agent_salary(request, agent_id):
 @permission_classes([IsAuthenticated])
 def admin_award_incentive(request):
     # 1. Security Check
-    if request.user.role not in ['owner', 'lead']:
+    # Using getattr for safety in case 'role' isn't on the User model directly
+    user_role = getattr(request.user, 'role', None)
+    if user_role not in ['owner', 'lead']:
         return Response({"error": "Only admins can award incentives"}, status=status.HTTP_403_FORBIDDEN)
 
     # 2. Data Extraction
     agent_id = request.data.get('agent_id')
     amount = request.data.get('amount')
-    incentive_type = request.data.get('type') # e.g., 'performance', 'weekly_bonus'
-    note = request.data.get('note', '') # Optional comment
+    incentive_type = request.data.get('type')
+    note = request.data.get('note', '')
 
     # 3. Validation
     if not all([agent_id, amount, incentive_type]):
         return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        agent = Employee.objects.get(id=agent_id, role='agent')
+        # 4. The Critical Fix: Changed 'id' to 'emp_id'
+        agent = Employee.objects.get(emp_id=agent_id, role='agent')
         
-        # 4. Create the Record
+        # 5. Create the Record
         incentive = Incentive.objects.create(
             agent=agent,
             amount=amount,
@@ -624,11 +627,14 @@ def admin_award_incentive(request):
         
         return Response({
             "message": f"Successfully awarded ₹{amount} to {agent.username}",
-            "id": incentive.id
+            "incentive_id": incentive.id # This is the ID of the NEW incentive record
         }, status=status.HTTP_201_CREATED)
 
     except Employee.DoesNotExist:
         return Response({"error": "Agent not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        # This will help you catch any other hidden issues
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class AgentEarningsDashboardView(APIView):
