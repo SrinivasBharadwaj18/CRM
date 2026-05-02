@@ -73,7 +73,59 @@ class IncentiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incentive
         fields = ['id', 'type', 'type_display', 'amount', 'date_earned', 'description', 'is_paid']
+
+
+
+from rest_framework import serializers
+from .models import Task, Lead
+
+class TaskSerializer(serializers.ModelSerializer):
+    # This pulls the lead's name directly from the related Lead model
+    # Use allow_null=True because some tasks might not be linked to a lead
+    lead_name = serializers.CharField(source='lead.name', read_only=True)
+    
+    # This pulls the agent's name/username for audit purposes
+    agent_name = serializers.CharField(source='agent.name', read_only=True)
+    
+    # We include the 'overdue' property we defined in the model
+    overdue = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            'id', 
+            'title', 
+            'lead',       # The ID (for editing/links)
+            'lead_name',  # The Name (for display in the table)
+            'agent', 
+            'agent_name',
+            'due_date', 
+            'priority', 
+            'is_completed', 
+            'overdue',    # Useful for the 'Overdue' tab logic
+            'note', 
+            'created_at'
+        ]
         
+        # 'agent' should be read_only if you are auto-assigning 
+        # it to the logged-in user in the view.
+        read_only_fields = ['id', 'created_at', 'overdue']
+
+    def validate_due_date(self, value):
+        """
+        Optional: Ensure tasks aren't created for dates long in the past.
+        """
+        from django.utils import timezone
+        if value < timezone.now().date():
+            # We allow it (for back-logging), but you could raise an error here
+            pass 
+        return value
+
+
+
+
+
+
 # from insurer.models import Employee
 
 # # Create the management user

@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -22,7 +22,7 @@ from .models import (
     Employee, Lead, MotorLead, HealthLead, LifeLead, 
     Conversion, Insurance, FollowUp, Score, 
     DailyOverallPerformance, Attendance, LeaveRequest,
-    RecruitmentStats,AdminTask, Incentive
+    RecruitmentStats,AdminTask, Incentive, Task
 )
 from django.db.models import Min, Case, When, Value, IntegerField
 
@@ -803,3 +803,176 @@ def get_admin_payout_history(request):
         })
     
     return Response(data, status=200)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_agent_tasks(request):
+    user_emp = request.user # Assuming user is the Employee
+    status_filter = request.query_params.get('status', 'all')
+    search = request.query_params.get('search', '')
+
+    tasks = Task.objects.filter(agent=user_emp)
+
+    if search:
+        tasks = tasks.filter(title__icontains=search)
+    
+    if status_filter == 'pending':
+        tasks = tasks.filter(status='pending', due_date__gte=timezone.now().date())
+    elif status_filter == 'completed':
+        tasks = tasks.filter(status='completed')
+    elif status_filter == 'overdue':
+        tasks = tasks.filter(status='pending', due_date__lt=timezone.now().date())
+
+    return Response(tasks.values('id', 'title', 'due_date', 'lead_name', 'priority', 'status'))
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_task_summary(request):
+    user_emp = request.user
+    today = timezone.now().date()
+    
+    base_qs = Task.objects.filter(agent=user_emp)
+    
+    return Response({
+        "all": base_qs.count(),
+        "pending": base_qs.filter(status='pending', due_date__gte=today).count(),
+        "completed": base_qs.filter(status='completed').count(),
+        "overdue": base_qs.filter(status='pending', due_date__lt=today).count(),
+        "high_priority": base_qs.filter(priority='high', status='pending').count(),
+    })
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def agent_tasks_list(request):
+    try:
+        # Filter strictly for tasks assigned to the logged-in agent
+        tasks = Task.objects.filter(agent=request.user).select_related('lead').order_by('due_date', '-created_at')
+        
+        # --- Applying Filters ---
+        
+        # A. Search (q) across title and lead name
+        search_query = request.query_params.get('q')
+        if search_query:
+            tasks = tasks.filter(
+                Q(title__icontains=search_query) | 
+                Q(lead__name__icontains=search_query)
+            )
+            
+        # B. Status Filter: 'pending', 'completed', 'overdue'
+        status_filter = request.query_params.get('status')
+        today = timezone.now().date()
+        if status_filter == 'completed':
+            tasks = tasks.filter(is_completed=True)
+        elif status_filter == 'pending':
+            tasks = tasks.filter(is_completed=False, due_date__gte=today)
+        elif status_filter == 'overdue':
+            tasks = tasks.filter(is_completed=False, due_date__lt=today)
+            
+        # C. Priority Filter: 'high', 'medium', 'low'
+        priority_filter = request.query_params.get('priority')
+        if priority_filter:
+            tasks = tasks.filter(priority=priority_filter)
+            
+        # --- Pagination ---
+        
+        # Use custom paginator (e.g., page_size=8 as shown in UI)
+        paginator = PageNumberPagination()
+        paginator.page_size = request.query_params.get('limit', 8)
+        paginated_tasks = paginator.paginate_queryset(tasks, request)
+        
+        # --- Return Serialized Data ---
+        
+        from .serializers import TaskSerializer # Flattens data for React consumption
+        serializer = TaskSerializer(paginated_tasks, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# 2. Task Counts API (GET)
+# Fetches dynamic counts for tabs and priority filters. Scoped to agent.
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def agent_task_counts(request):
+    try:
+        # Strictly assigned tasks
+        base_tasks = Task.objects.filter(agent=request.user)
+        today = timezone.now().date()
+        
+        # aggregation is faster than individual count queries
+        counts = base_tasks.aggregate(
+            all=Count('id'),
+            pending=Count('id', filter=Q(is_completed=False, due_date__gte=today)),
+            completed=Count('id', filter=Q(is_completed=True)),
+            overdue=Count('id', filter=Q(is_completed=False, due_date__lt=today)),
+            # Priority Counts
+            high=Count('id', filter=Q(priority='high')),
+            medium=Count('id', filter=Q(priority='medium')),
+            low=Count('id', filter=Q(priority='low')),
+        )
+        
+        return Response(counts, status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# 3. Create Task API (POST)
+# Auto-scopes task assignment securely.
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_agent_task(request):
+    # Validation
+    title = request.data.get('title')
+    due_date = request.data.get('due_date')
+    priority = request.data.get('priority')
+    lead_id = request.data.get('lead_id', None) # Optional link
+
+    if not all([title, due_date, priority]):
+        return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Secure record creation
+        task = Task.objects.create(
+            agent=request.user, # Security: Automatic assignment
+            title=title,
+            due_date=due_date,
+            priority=priority,
+            # Link lead if provided
+            lead_id=lead_id if lead_id else None
+        )
+        
+        return Response({
+            "message": "Task created successfully",
+            "task_id": task.id
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# 4. Mark Task Complete API (PUT)
+# Secure, scoped by assigned agent.
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def complete_agent_task(request, task_id):
+    try:
+        # 'agent=request.user' ensures they can only complete their OWN tasks
+        task = Task.objects.get(id=task_id, agent=request.user)
+        
+        if task.is_completed:
+            return Response({"error": "Task is already complete"}, status=400)
+            
+        task.is_completed = True
+        task.save()
+        
+        return Response({"message": "Task marked as complete"}, status=200)
+        
+    except Task.DoesNotExist:
+        return Response({"error": "Task not found or not assigned to you"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

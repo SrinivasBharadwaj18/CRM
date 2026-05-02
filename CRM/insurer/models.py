@@ -466,3 +466,33 @@ def distribute_leads_to_new_agent(sender, instance, created, **kwargs):
 
             print(f"🚀 REBALANCE: {len(leads_to_assign_ids)} leads moved to new agent: {instance.name}")
 
+
+
+class Task(models.Model):
+    # Link to Lead object for data integrity
+    lead = models.ForeignKey('Lead', on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
+    agent = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name='tasks')
+    
+    title = models.CharField(max_length=255)
+    due_date = models.DateField()
+    is_completed = models.BooleanField(default=False)
+    
+    PRIORITY_CHOICES = [
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    ]
+    # Set a default to prevent crashes during task creation
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    
+    note = models.TextField(blank=True, null=True) 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.priority})"
+
+    @property
+    def overdue(self):
+        from django.utils import timezone
+        return (not self.is_completed) and (self.due_date < timezone.now().date())

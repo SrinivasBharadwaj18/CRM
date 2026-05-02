@@ -23,6 +23,11 @@ from .views import (
     get_all_agents,
     get_admin_payout_history,
     get_finance_summary,
+    agent_tasks_list,
+    agent_task_counts,
+    get_agent_tasks,
+    complete_agent_task,
+    create_agent_task,
     AgentEarningsDashboardView
 )
 from django.urls import path, re_path, include
@@ -56,5 +61,9 @@ urlpatterns = [
     path("agent/<int:id>/close/", close_lead, name="close_lead" ),
     path("agent/<int:id>/mark-paid/", mark_as_paid, name="mark_paid"),
     path('agent/earnings-dashboard/', AgentEarningsDashboardView.as_view(), name='agent-earnings'),
+    path('agent/tasks/', agent_tasks_list, name='agent-tasks'),
+    path('agent/tasks/counts/', agent_task_counts, name='agent-task-counts'),
+    path('agent/tasks/create/', create_agent_task, name='create-agent-task'),
+    path('agent/tasks/<int:task_id>/complete/', complete_agent_task, name='complete-agent-task'),
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 ]
