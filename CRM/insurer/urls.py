@@ -21,6 +21,8 @@ from .views import (
     update_agent_salary,
     admin_award_incentive,
     get_all_agents,
+    get_admin_payout_history,
+    get_finance_summary,
     AgentEarningsDashboardView
 )
 from django.urls import path, re_path, include
@@ -42,7 +44,8 @@ urlpatterns = [
     path('admin/agents/', get_all_agents, name='list-agents'),
     path('admin/update-salary/<int:agent_id>/', update_agent_salary, name='update-salary'),
     path('admin/award-incentive/', admin_award_incentive, name='award-incentive'),
-
+    path('admin/payout-history/', get_admin_payout_history, name='payout-history'),
+    path('admin/finance-summary/', get_finance_summary, name='finance-summary'),
     # Agent APIs
     path("agent/leads/", agent_leads, name="agent_leads"),
     path("leads/<int:id>/", lead_detail, name="lead_detail"),

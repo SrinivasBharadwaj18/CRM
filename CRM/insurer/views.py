@@ -694,63 +694,90 @@ class AgentEarningsDashboardView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_all_agents(request):
-    # Security check: Only owners and leads should see the full agent list
-    if request.user.role not in ['owner', 'lead']:
-        return Response({"error": "Unauthorized"}, status=403)
+    try:
+        print(f"--- DEBUG: Request from user {request.user.username} ---")
+        
+        # 1. Safer role check
+        user_role = getattr(request.user, 'role', None)
+        # If using a separate Employee profile, try: 
+        # user_role = getattr(request.user.employee, 'role', None)
+        
+        print(f"--- DEBUG: User role detected: {user_role} ---")
 
-    # Filter to only get users with the 'agent' role
-    # Using 'Employee' model as per your previous snippet
-    agents = Employee.objects.filter(role='agent').values('id', 'username', 'name', 'base_salary')
-    
-    return Response(agents, status=200)
+        if user_role not in ['owner', 'lead']:
+            return Response({"error": "Unauthorized"}, status=403)
 
+        # 2. Fetch agents
+        # We wrap this in a list() to force the database query to happen NOW
+        agents_queryset = Employee.objects.filter(role='agent').values('id', 'username', 'name', 'base_salary')
+        agents_list = list(agents_queryset)
+        
+        print(f"--- DEBUG: Successfully found {len(agents_list)} agents ---")
+        return Response(agents_list, status=200)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_admin_payout_history(request):
-    # Security check: Only owners/leads
-    if request.user.role not in ['owner', 'lead']:
-        return Response({"error": "Unauthorized"}, status=403)
-
-    # select_related('agent') makes this fast by joining the tables in one query
-    history = Incentive.objects.select_related('agent').all().order_by('-date_earned', '-id')
-    
-    data = []
-    for item in history:
-        data.append({
-            "id": item.id,
-            "agent_name": item.agent.name or item.agent.username,
-            "amount": float(item.amount),
-            "type": item.type.replace('_', ' ').title(), # Formats 'weekly_bonus' to 'Weekly Bonus'
-            "date": item.date_earned.strftime("%d %b %Y")
-        })
-    
-    return Response(data, status=200)
-
+    except Exception as e:
+        # THIS WILL SHOW IN YOUR DOCKER LOGS
+        print("!!! CRITICAL VIEW ERROR !!!")
+        import traceback
+        print(traceback.format_exc()) 
+        return Response({"error": str(e)}, status=500)
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_finance_summary(request):
-    if request.user.role not in ['owner', 'lead']:
+    # Potential 500 trigger: Check if 'role' is directly on the User model.
+    # If role is on an 'Employee' profile linked to the user, 
+    # you might need request.user.employee.role
+    if getattr(request.user, 'role', None) not in ['owner', 'lead']:
         return Response({"error": "Unauthorized"}, status=403)
 
-    # 1. Calculate Total Base Salaries (fixed cost)
-    total_base_salaries = Employee.objects.filter(role='agent').aggregate(Sum('base_salary'))['base_salary__sum'] or 0
+    # 1. Calculate Total Base Salaries
+    # Note: .aggregate returns a dict like {'base_salary__sum': None} if no records exist
+    res_base = Employee.objects.filter(role='agent').aggregate(Sum('base_salary'))
+    total_base = res_base.get('base_salary__sum') or 0
 
-    # 2. Calculate Monthly Incentives (variable cost)
+    # 2. Calculate Monthly Incentives
     today = timezone.now().date()
     start_date = today.replace(day=1)
+    # Get last day of current month safely
     last_day = calendar.monthrange(today.year, today.month)[1]
     end_date = today.replace(day=last_day)
 
-    total_incentives = Incentive.objects.filter(
+    res_inc = Incentive.objects.filter(
         date_earned__range=[start_date, end_date]
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+    ).aggregate(Sum('amount'))
+    total_incentives = res_inc.get('amount__sum') or 0
 
     return Response({
-        "total_base_salaries": float(total_base_salaries),
+        "total_base_salaries": float(total_base),
         "total_incentives": float(total_incentives),
-        "grand_total": float(total_base_salaries + total_incentives),
+        "grand_total": float(total_base + total_incentives),
         "month_name": today.strftime("%B %Y")
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_admin_payout_history(request):
+    if getattr(request.user, 'role', None) not in ['owner', 'lead']:
+        return Response({"error": "Unauthorized"}, status=403)
+
+    # select_related('agent') only works if 'agent' is a ForeignKey on the Incentive model
+    history = Incentive.objects.select_related('agent').all().order_by('-date_earned', '-id')
+    
+    data = []
+    for item in history:
+        # Check for None values to prevent .strftime() or .replace() crashes
+        agent_name = "Unknown"
+        if item.agent:
+            agent_name = getattr(item.agent, 'name', None) or getattr(item.agent, 'username', 'Unknown')
+
+        data.append({
+            "id": item.id,
+            "agent_name": agent_name,
+            "amount": float(item.amount or 0),
+            "type": (item.type or "bonus").replace('_', ' ').title(),
+            "date": item.date_earned.strftime("%d %b %Y") if item.date_earned else "N/A"
+        })
+    
+    return Response(data, status=200)
