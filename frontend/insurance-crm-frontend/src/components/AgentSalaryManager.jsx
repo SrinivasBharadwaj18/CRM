@@ -23,9 +23,10 @@ const AgentSalaryManager = ({ onUpdate }) => {
     }
   };
 
-  const handleUpdateSalary = async (id) => {
+  const handleUpdateSalary = async (emp_id) => {
     try {
-      await api.patch(`admin/update-salary/${id}/`, { base_salary: tempSalary });
+      // Use emp_id in the URL to match your backend path('admin/update-salary/<int:agent_id>/'...)
+      await api.patch(`admin/update-salary/${emp_id}/`, { base_salary: tempSalary });
       setEditingId(null);
       fetchAgents(); // Refresh the table
       if (onUpdate) onUpdate(); // Refresh the totals at the top of the Finance page
@@ -50,11 +51,13 @@ const AgentSalaryManager = ({ onUpdate }) => {
         </thead>
         <tbody>
           {agents.map(agent => (
-            <tr key={agent.id} style={styles.tr}>
+            /* Updated key to use emp_id */
+            <tr key={agent.emp_id} style={styles.tr}>
               <td style={styles.td}>{agent.name || agent.username}</td>
               <td style={styles.td}>{agent.username}</td>
               <td style={styles.td}>
-                {editingId === agent.id ? (
+                {/* Updated check to use emp_id */}
+                {editingId === agent.emp_id ? (
                   <input 
                     type="number" 
                     value={tempSalary} 
@@ -62,17 +65,18 @@ const AgentSalaryManager = ({ onUpdate }) => {
                     style={styles.inlineInput}
                   />
                 ) : (
-                  <span style={styles.salaryText}>₹{agent.base_salary?.toLocaleString() || "20,000"}</span>
+                  <span style={styles.salaryText}>₹{agent.base_salary?.toLocaleString() || "0"}</span>
                 )}
               </td>
               <td style={styles.td}>
-                {editingId === agent.id ? (
-                  <button onClick={() => handleUpdateSalary(agent.id)} style={styles.saveBtn}>
+                {/* Updated conditions and click handlers to use emp_id */}
+                {editingId === agent.emp_id ? (
+                  <button onClick={() => handleUpdateSalary(agent.emp_id)} style={styles.saveBtn}>
                     <Save size={14} /> Save
                   </button>
                 ) : (
                   <button 
-                    onClick={() => { setEditingId(agent.id); setTempSalary(agent.base_salary); }} 
+                    onClick={() => { setEditingId(agent.emp_id); setTempSalary(agent.base_salary); }} 
                     style={styles.editBtn}
                   >
                     Edit Salary

@@ -42,7 +42,11 @@ const AwardIncentive = () => {
             style={styles.select}
           >
             <option value="">-- Choose Agent --</option>
-            {agents.map(a => <option key={a.id} value={a.id}>{a.username} ({a.name})</option>)}
+            {agents.map(a => (
+            <option key={a.emp_id} value={a.emp_id}> {/* Changed from a.id */}
+                {a.username} ({a.name})
+            </option>
+            ))}
           </select>
         </div>
 

@@ -558,24 +558,40 @@ def mark_as_paid(request, id):
 @api_view(['PATCH']) # PATCH is used for partial updates
 @permission_classes([IsAuthenticated])
 def update_agent_salary(request, agent_id):
-    # Security check
-    if request.user.role not in ['owner', 'lead']:
+    # 1. Security check: Only owners and leads can modify financial data
+    # Note: If 'role' is on a profile model, use request.user.employee.role
+    user_role = getattr(request.user, 'role', None)
+    if user_role not in ['owner', 'lead']:
         return Response({"error": "Unauthorized"}, status=403)
 
     try:
-        # Find the agent
-        agent = Employee.objects.get(id=agent_id, role='agent')
+        # 2. Find the agent using emp_id (swapped from id)
+        # We also filter by role='agent' to ensure we aren't accidentally updating an admin
+        agent = Employee.objects.get(emp_id=agent_id, role='agent')
+        
         new_salary = request.data.get('base_salary')
 
+        # 3. Validation and Update
         if new_salary is not None:
-            agent.base_salary = new_salary
-            agent.save()
-            return Response({"message": f"Salary updated to ₹{new_salary} for {agent.username}"})
+            try:
+                # Ensure the value is saved as a number
+                agent.base_salary = float(new_salary)
+                agent.save()
+                return Response({
+                    "message": f"Salary updated to ₹{new_salary} for {agent.username}",
+                    "emp_id": agent.emp_id,
+                    "new_salary": agent.base_salary
+                }, status=200)
+            except ValueError:
+                return Response({"error": "Invalid salary format. Must be a number."}, status=400)
         
         return Response({"error": "Salary value is required"}, status=400)
 
     except Employee.DoesNotExist:
         return Response({"error": "Agent not found"}, status=404)
+    except Exception as e:
+        # Catch-all for unexpected errors (like database locks)
+        return Response({"error": str(e)}, status=500)
 
 
 @api_view(['POST'])
