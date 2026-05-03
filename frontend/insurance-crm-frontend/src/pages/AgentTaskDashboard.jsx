@@ -57,8 +57,8 @@ const AgentTaskDashboard = () => {
   return (
     <div style={styles.pageContainer}>
       {/* 
-          This Header now sits at the top of the content area, 
-          right next to the dark sidebar.
+          TOP HEADER 
+          This is now the ONLY header on the page, positioned next to your dark sidebar.
       */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
@@ -73,7 +73,7 @@ const AgentTaskDashboard = () => {
       </header>
 
       <div style={styles.contentPadding}>
-        {/* TOP CONTROLS */}
+        {/* SEARCH & ACTIONS */}
         <div style={styles.controlsRow}>
           <div style={styles.searchAndFilter}>
             <div style={styles.searchWrapper}>
@@ -94,9 +94,8 @@ const AgentTaskDashboard = () => {
           </button>
         </div>
 
-        {/* DASHBOARD CARD */}
+        {/* TASK CARD */}
         <div style={styles.card}>
-          {/* TABS */}
           <div style={styles.tabBar}>
             {[
               { id: 'all', label: 'All Tasks', count: counts.all, color: '#1e293b' },
@@ -115,28 +114,26 @@ const AgentTaskDashboard = () => {
             ))}
           </div>
 
-          {/* QUICK PRIORITY FILTERS */}
           <div style={styles.priorityRow}>
             {[
-              { id: 'high', label: 'High', count: counts.high, styles: styles.pHigh },
-              { id: 'medium', label: 'Medium', count: counts.medium, styles: styles.pMedium },
-              { id: 'low', label: 'Low', count: counts.low, styles: styles.pLow },
+              { id: 'high', label: 'High', count: counts.high, badge: styles.badge_high },
+              { id: 'medium', label: 'Medium', count: counts.medium, badge: styles.badge_medium },
+              { id: 'low', label: 'Low', count: counts.low, badge: styles.badge_low },
             ].map(p => (
               <button 
                 key={p.id}
                 onClick={() => { setPriorityFilter(priorityFilter === p.id ? null : p.id); setPage(1); }}
                 style={{
                     ...styles.priorityBtn, 
-                    ...p.styles, 
-                    ...(priorityFilter === p.id ? styles.priorityBtnActive : {})
+                    ...p.badge, 
+                    border: priorityFilter === p.id ? '2px solid #2563eb' : '1px solid transparent'
                 }}
               >
-                {p.label} <span style={styles.pCount}>({p.count})</span>
+                {p.label} <span>({p.count})</span>
               </button>
             ))}
           </div>
 
-          {/* TABLE */}
           <div style={styles.tableWrapper}>
             <table style={styles.table}>
               <thead style={styles.thead}>
@@ -151,16 +148,14 @@ const AgentTaskDashboard = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} style={styles.emptyState}>Loading tasks...</td></tr>
+                  <tr><td colSpan={6} style={styles.emptyState}>Updating tasks...</td></tr>
                 ) : tasks.length === 0 ? (
                   <tr><td colSpan={6} style={styles.emptyState}>No tasks found.</td></tr>
                 ) : tasks.map((task, idx) => (
                   <tr key={task.id} style={idx % 2 === 1 ? styles.trAlt : styles.tr}>
                     <td style={styles.td}><input type="checkbox" /></td>
                     <td style={styles.tdTask}>{task.title}</td>
-                    <td style={styles.td}>
-                      {task.overdue ? <span style={styles.overdueText}>Overdue</span> : task.due_date}
-                    </td>
+                    <td style={styles.td}>{task.due_date}</td>
                     <td style={styles.tdLead}>{task.lead_name || "—"}</td>
                     <td style={styles.td}>
                       <span style={{...styles.badge, ...styles[`badge_${task.priority}`]}}>{task.priority}</span>
@@ -179,7 +174,6 @@ const AgentTaskDashboard = () => {
             </table>
           </div>
 
-          {/* FOOTER */}
           <div style={styles.footer}>
             <div>Showing {tasks.length} of {counts.all} tasks</div>
             <div style={styles.pagination}>
@@ -195,20 +189,15 @@ const AgentTaskDashboard = () => {
 };
 
 const styles = {
-  // marginLeft '260px' pushes the content past the dark sidebar
-  pageContainer: { 
-    marginLeft: '260px', 
-    minHeight: '100vh', 
-    backgroundColor: '#f1f5f9', 
-    fontFamily: 'Inter, sans-serif' 
-  },
+  // We use exactly 260px to match your dark navbar
+  pageContainer: { marginLeft: '260px', width: 'calc(100% - 260px)', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
   
   header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '700', fontSize: '14px' },
   headerTitle: { fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '16px' },
-  iconBtn: { padding: '8px', border: 'none', backgroundColor: 'transparent', color: '#64748b', borderRadius: '50%', cursor: 'pointer' },
-  avatar: { width: '40px', height: '40px', backgroundColor: '#e2e8f0', borderRadius: '50%', overflow: 'hidden', border: '2px solid white' },
+  iconBtn: { padding: '8px', border: 'none', backgroundColor: 'transparent', color: '#64748b', cursor: 'pointer' },
+  avatar: { width: '40px', height: '40px', backgroundColor: '#e2e8f0', borderRadius: '50%', border: '2px solid white' },
 
   contentPadding: { padding: '40px' },
   controlsRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '16px' },
@@ -219,7 +208,7 @@ const styles = {
   secondaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontWeight: '700', color: '#475569', cursor: 'pointer' },
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer' },
 
-  card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' },
+  card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
   tabBar: { display: 'flex', gap: '32px', borderBottom: '1px solid #f1f5f9', marginBottom: '32px', position: 'relative' },
   tab: { paddingBottom: '16px', fontSize: '14px', fontWeight: '700', color: '#94a3b8', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' },
   tabActive: { paddingBottom: '16px', fontSize: '14px', fontWeight: '700', color: '#2563eb', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', position: 'relative' },
@@ -227,23 +216,17 @@ const styles = {
   tabIndicator: { position: 'absolute', bottom: 0, left: 0, width: '100%', height: '3px', backgroundColor: '#2563eb', borderRadius: '10px' },
 
   priorityRow: { display: 'flex', gap: '16px', marginBottom: '32px' },
-  priorityBtn: { padding: '10px 20px', borderRadius: '16px', fontSize: '12px', fontWeight: '900', border: '1px solid transparent', cursor: 'pointer' },
-  priorityBtnActive: { backgroundColor: '#2563eb', color: 'white' },
-  pHigh: { backgroundColor: '#fee2e2', color: '#dc2626' },
-  pMedium: { backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' },
-  pLow: { backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' },
-  pCount: { marginLeft: '8px', opacity: 0.8 },
-
+  priorityBtn: { padding: '10px 20px', borderRadius: '16px', fontSize: '12px', fontWeight: '900', cursor: 'pointer', display: 'flex', gap: '8px' },
+  
   tableWrapper: { border: '1px solid #f1f5f9', borderRadius: '16px', overflow: 'hidden', marginBottom: '24px' },
   table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
   thead: { backgroundColor: '#f8fafc' },
   th: { padding: '16px', fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' },
   tr: { borderBottom: '1px solid #f8fafc' },
-  trAlt: { backgroundColor: '#fdfdff', borderBottom: '1px solid #f8fafc' },
+  trAlt: { backgroundColor: '#fdfdff' },
   td: { padding: '16px', fontSize: '13px', color: '#64748b', fontWeight: '600' },
   tdTask: { padding: '16px', fontSize: '14px', color: '#1e40af', fontWeight: '800' },
   tdLead: { padding: '16px', fontSize: '14px', color: '#334155', fontWeight: '700' },
-  overdueText: { color: '#ef4444', textDecoration: 'underline', fontWeight: '800' },
   badge: { padding: '4px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: '900' },
   badge_high: { backgroundColor: '#fee2e2', color: '#dc2626' },
   badge_medium: { backgroundColor: '#ffedd5', color: '#ea580c' },
@@ -253,9 +236,9 @@ const styles = {
   editBtn: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900' },
   doneBtn: { backgroundColor: '#10b981', color: 'white', border: 'none', padding: '6px', borderRadius: '8px' },
 
-  footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8', fontSize: '12px' },
+  footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8', fontSize: '12px', fontWeight: '700' },
   pagination: { display: 'flex', gap: '4px' },
-  pageBtn: { width: '36px', height: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: 'white', cursor: 'pointer' },
+  pageBtn: { width: '36px', height: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: 'white' },
   pageBtnActive: { width: '36px', height: '36px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: 'white', fontWeight: '700' },
   emptyState: { padding: '80px', textAlign: 'center', color: '#94a3b8', fontWeight: '700' }
 };
