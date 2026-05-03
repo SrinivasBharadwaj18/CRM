@@ -28,7 +28,7 @@ from django.db.models import Min, Case, When, Value, IntegerField
 
 from rest_framework.views import APIView
 from django.db.models.functions import TruncWeek
-from .serializers import IncentiveSerializer
+from .serializers import IncentiveSerializer, TaskSerializer
 import calendar
 from datetime import date
 from django.db.models.functions import TruncWeek, TruncMonth
@@ -976,3 +976,22 @@ def complete_agent_task(request, task_id):
         return Response({"error": "Task not found or not assigned to you"}, status=404)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_agent_task(request, task_id):
+    try:
+        # Secure lookup: task must belong to the logged-in agent
+        task = Task.objects.get(id=task_id, agent=request.user)
+        
+        # We use a partial update (PATCH) to allow changing just one or all fields
+        serializer = TaskSerializer(task, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+        
+    except Task.DoesNotExist:
+        return Response({"error": "Task not found"}, status=404)

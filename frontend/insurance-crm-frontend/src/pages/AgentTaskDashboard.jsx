@@ -15,9 +15,10 @@ const AgentTaskDashboard = () => {
   const [statusTab, setStatusTab] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState(null);
 
-  // New Task Modal State
-  const [showModal, setShowModal] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', due_date: '', priority: 'medium', lead: '' });
+  // Modal States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null); // null = New Task mode
+  const [formData, setFormData] = useState({ title: '', due_date: '', priority: 'medium' });
 
   useEffect(() => {
     fetchTasks();
@@ -48,16 +49,31 @@ const AgentTaskDashboard = () => {
     }
   };
 
-  const handleCreateTask = async (e) => {
+  // Open modal for either New or Edit
+  const openModal = (task = null) => {
+    if (task) {
+      setEditingTask(task);
+      setFormData({ title: task.title, due_date: task.due_date, priority: task.priority });
+    } else {
+      setEditingTask(null);
+      setFormData({ title: '', due_date: '', priority: 'medium' });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("agent/tasks/create/", newTask);
-      setShowModal(false);
-      setNewTask({ title: '', due_date: '', priority: 'medium', lead: '' });
+      if (editingTask) {
+        await api.patch(`agent/tasks/${editingTask.id}/update/`, formData);
+      } else {
+        await api.post("agent/tasks/create/", formData);
+      }
+      setIsModalOpen(false);
       fetchTasks();
       fetchCounts();
     } catch (err) {
-      alert("Error creating task. Ensure all fields are filled.");
+      alert("Error saving task. Please check your inputs.");
     }
   };
 
@@ -95,28 +111,26 @@ const AgentTaskDashboard = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* Layout fixed: Filter button now has explicit width/flex settings */}
+            {/* Filter button now has flexShrink to prevent it being squashed */}
             <button style={styles.secondaryBtn}>
-              <Filter size={18} /> <span>Filters</span> <ChevronDown size={16} />
+              <Filter size={18} /> Filters <ChevronDown size={16} />
             </button>
           </div>
-          <button onClick={() => setShowModal(true)} style={styles.primaryBtn}>
+          <button onClick={() => openModal()} style={styles.primaryBtn}>
             <Plus size={20} /> New Task
           </button>
         </div>
 
         <div style={styles.card}>
-          {/* TABS */}
           <div style={styles.tabBar}>
             {['all', 'pending', 'completed', 'overdue'].map(id => (
               <button key={id} onClick={() => { setStatusTab(id); setPage(1); }} style={statusTab === id ? styles.tabActive : styles.tab}>
-                {id.charAt(0).toUpperCase() + id.slice(1)} <span style={styles.tabCount}>({counts[id]})</span>
+                {id.charAt(0).toUpperCase() + id.slice(1)} <span style={styles.tabCount}>({counts[id] || 0})</span>
                 {statusTab === id && <div style={styles.tabIndicator} />}
               </button>
             ))}
           </div>
 
-          {/* PRIORITY FILTERS */}
           <div style={styles.priorityRow}>
             {['high', 'medium', 'low'].map(p => (
               <button 
@@ -124,12 +138,11 @@ const AgentTaskDashboard = () => {
                 onClick={() => { setPriorityFilter(priorityFilter === p ? null : p); setPage(1); }}
                 style={{...styles.priorityBtn, ...styles[`p${p.charAt(0).toUpperCase() + p.slice(1)}`], border: priorityFilter === p ? '2px solid #2563eb' : '1px solid transparent'}}
               >
-                {p.charAt(0).toUpperCase() + p.slice(1)} <span>({counts[p]})</span>
+                {p.charAt(0).toUpperCase() + p.slice(1)} <span>({counts[p] || 0})</span>
               </button>
             ))}
           </div>
 
-          {/* TABLE */}
           <div style={styles.tableWrapper}>
             <table style={styles.table}>
               <thead style={styles.thead}>
@@ -144,7 +157,7 @@ const AgentTaskDashboard = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} style={styles.emptyState}>Updating...</td></tr>
+                  <tr><td colSpan={6} style={styles.emptyState}>Syncing...</td></tr>
                 ) : tasks.length === 0 ? (
                   <tr><td colSpan={6} style={styles.emptyState}>No tasks found.</td></tr>
                 ) : tasks.map((task, idx) => (
@@ -156,7 +169,8 @@ const AgentTaskDashboard = () => {
                     <td style={styles.td}><span style={{...styles.badge, ...styles[`badge_${task.priority}`]}}>{task.priority}</span></td>
                     <td style={styles.td}>
                       <div style={styles.actionContainer}>
-                        <button style={styles.editBtn}><Edit2 size={12} /> EDIT</button>
+                        {/* Edit Button linked to the openModal function */}
+                        <button onClick={() => openModal(task)} style={styles.editBtn}><Edit2 size={12} /> EDIT</button>
                         {!task.is_completed && <button onClick={() => handleCompleteTask(task.id)} style={styles.doneBtn}><CheckCircle size={18} /></button>}
                       </div>
                     </td>
@@ -177,29 +191,31 @@ const AgentTaskDashboard = () => {
         </div>
       </div>
 
-      {/* NEW TASK MODAL */}
-      {showModal && (
+      {/* MODAL: Handles both Create and Edit */}
+      {isModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
             <div style={styles.modalHeader}>
-              <h2 style={{margin:0}}>Create New Task</h2>
-              <button onClick={() => setShowModal(false)} style={styles.closeBtn}><X /></button>
+              <h2 style={{margin:0, fontWeight: 900}}>{editingTask ? "Edit Task" : "New Task"}</h2>
+              <button onClick={() => setIsModalOpen(false)} style={styles.closeBtn}><X /></button>
             </div>
-            <form onSubmit={handleCreateTask} style={styles.modalForm}>
-              <label>Task Title</label>
-              <input required style={styles.modalInput} value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} placeholder="e.g. Follow up with client" />
+            <form onSubmit={handleSubmit} style={styles.modalForm}>
+              <label style={styles.label}>What needs to be done?</label>
+              <input required style={styles.modalInput} value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Call Mr. Sharma" />
               
-              <label>Due Date</label>
-              <input required type="date" style={styles.modalInput} value={newTask.due_date} onChange={e => setNewTask({...newTask, due_date: e.target.value})} />
+              <label style={styles.label}>When is it due?</label>
+              <input required type="date" style={styles.modalInput} value={formData.due_date} onChange={e => setFormData({...formData, due_date: e.target.value})} />
               
-              <label>Priority</label>
-              <select style={styles.modalInput} value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}>
+              <label style={styles.label}>Priority Level</label>
+              <select style={styles.modalInput} value={formData.priority} onChange={e => setFormData({...formData, priority: e.target.value})}>
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
               
-              <button type="submit" style={styles.modalSubmit}>Create Task</button>
+              <button type="submit" style={styles.modalSubmit}>
+                {editingTask ? "Save Changes" : "Create Task"}
+              </button>
             </form>
           </div>
         </div>
@@ -209,7 +225,7 @@ const AgentTaskDashboard = () => {
 };
 
 const styles = {
-  pageContainer: { flex: 1, minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
+  pageContainer: { marginLeft: '260px', width: 'calc(100% - 260px)', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
   header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '700', fontSize: '14px' },
   headerTitle: { fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
@@ -217,14 +233,14 @@ const styles = {
   iconBtn: { padding: '8px', border: 'none', backgroundColor: 'transparent', color: '#64748b', cursor: 'pointer' },
   avatar: { width: '40px', height: '40px', backgroundColor: '#e2e8f0', borderRadius: '50%', border: '2px solid white' },
   contentPadding: { padding: '40px' },
-  
-  // FIX: controlsRow and searchAndFilter widths
-  controlsRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '16px', alignItems: 'center' },
-  searchAndFilter: { display: 'flex', gap: '12px', flex: 1, maxWidth: '500px' },
+
+  // FIX: Space between search and filter
+  controlsRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px', alignItems: 'center' },
+  searchAndFilter: { display: 'flex', gap: '12px', flex: 1, maxWidth: '600px' },
   searchWrapper: { position: 'relative', flex: 1 },
   searchIcon: { position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
   searchInput: { width: '100%', padding: '12px 16px 12px 48px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontSize: '14px', outline: 'none' },
-  secondaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontWeight: '700', color: '#475569', cursor: 'pointer', whiteSpace: 'nowrap' },
+  secondaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontWeight: '700', color: '#475569', cursor: 'pointer', flexShrink: 0 },
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', flexShrink: 0 },
 
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
@@ -252,8 +268,8 @@ const styles = {
   badge_medium: { backgroundColor: '#ffedd5', color: '#ea580c' },
   badge_low: { backgroundColor: '#ecfdf5', color: '#10b981' },
   actionContainer: { display: 'flex', alignItems: 'center', gap: '8px' },
-  editBtn: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900' },
-  doneBtn: { backgroundColor: '#10b981', color: 'white', border: 'none', padding: '6px', borderRadius: '8px' },
+  editBtn: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900', cursor: 'pointer' },
+  doneBtn: { backgroundColor: '#10b981', color: 'white', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer' },
   footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8', fontSize: '12px', fontWeight: '700' },
   pagination: { display: 'flex', gap: '4px' },
   pageBtn: { width: '36px', height: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: 'white' },
@@ -262,12 +278,13 @@ const styles = {
 
   // MODAL STYLES
   modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
-  modal: { backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '450px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' },
+  modal: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '450px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' },
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
   closeBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' },
-  modalForm: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  modalInput: { padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none' },
-  modalSubmit: { marginTop: '12px', padding: '14px', borderRadius: '12px', backgroundColor: '#2563eb', color: 'white', border: 'none', fontWeight: '800', cursor: 'pointer' }
+  modalForm: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  label: { fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' },
+  modalInput: { padding: '14px', borderRadius: '16px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '14px', fontWeight: '600' },
+  modalSubmit: { marginTop: '12px', padding: '16px', borderRadius: '16px', backgroundColor: '#2563eb', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.2)' }
 };
 
 export default AgentTaskDashboard;
