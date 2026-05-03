@@ -56,7 +56,10 @@ const AgentTaskDashboard = () => {
 
   return (
     <div style={styles.pageContainer}>
-      {/* HEADER SECTION - Adjusted to match the top-bar style */}
+      {/* 
+          This Header now sits at the top of the content area, 
+          right next to the dark sidebar.
+      */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           Agent Dashboard <ChevronDown size={16} />
@@ -192,17 +195,22 @@ const AgentTaskDashboard = () => {
 };
 
 const styles = {
-  // Adjusted: MarginLeft matches your sidebar width (260px)
-  pageContainer: { marginLeft: '260px', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
+  // marginLeft '260px' pushes the content past the dark sidebar
+  pageContainer: { 
+    marginLeft: '260px', 
+    minHeight: '100vh', 
+    backgroundColor: '#f1f5f9', 
+    fontFamily: 'Inter, sans-serif' 
+  },
   
   header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '700', fontSize: '14px' },
-  headerTitle: { fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0 },
+  headerTitle: { fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '16px' },
   iconBtn: { padding: '8px', border: 'none', backgroundColor: 'transparent', color: '#64748b', borderRadius: '50%', cursor: 'pointer' },
   avatar: { width: '40px', height: '40px', backgroundColor: '#e2e8f0', borderRadius: '50%', overflow: 'hidden', border: '2px solid white' },
 
-  contentPadding: { padding: '32px' },
+  contentPadding: { padding: '40px' },
   controlsRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '16px' },
   searchAndFilter: { display: 'flex', gap: '16px', flex: 1, maxWidth: '600px' },
   searchWrapper: { position: 'relative', flex: 1 },
@@ -211,8 +219,8 @@ const styles = {
   secondaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontWeight: '700', color: '#475569', cursor: 'pointer' },
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer' },
 
-  card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px' },
-  tabBar: { display: 'flex', gap: '32px', borderBottom: '1px solid #f1f5f9', marginBottom: '32px' },
+  card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' },
+  tabBar: { display: 'flex', gap: '32px', borderBottom: '1px solid #f1f5f9', marginBottom: '32px', position: 'relative' },
   tab: { paddingBottom: '16px', fontSize: '14px', fontWeight: '700', color: '#94a3b8', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' },
   tabActive: { paddingBottom: '16px', fontSize: '14px', fontWeight: '700', color: '#2563eb', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', position: 'relative' },
   tabCount: { fontWeight: '900', marginLeft: '4px' },
