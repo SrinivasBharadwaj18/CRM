@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import {
   Bell, Settings, UserCircle, Search, ChevronDown, Plus, 
-  ChevronLeft, ChevronRight, Edit2, CheckCircle, Filter, X
+  ChevronLeft, ChevronRight, Edit2, CheckCircle, X
 } from 'lucide-react';
 
 const AgentTaskDashboard = () => {
@@ -89,7 +89,8 @@ const AgentTaskDashboard = () => {
   return (
     <div style={styles.pageContainer}>
       <header style={styles.header}>
-        <div style={styles.headerLeft}>Agent Dashboard <ChevronDown size={16} /></div>
+        {/* RENAMED: Task Dashboard */}
+        <div style={styles.headerLeft}>Task Dashboard <ChevronDown size={16} /></div>
         <h1 style={styles.headerTitle}>Tasks</h1>
         <div style={styles.headerRight}>
           <button style={styles.iconBtn}><Bell size={20}/></button>
@@ -100,7 +101,6 @@ const AgentTaskDashboard = () => {
 
       <div style={styles.contentPadding}>
         <div style={styles.controlsRow}>
-          {/* FIXED: Explicit Gap and No Overlap */}
           <div style={styles.searchAndFilter}>
             <div style={styles.searchWrapper}>
               <Search style={styles.searchIcon} size={18} />
@@ -111,9 +111,7 @@ const AgentTaskDashboard = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button style={styles.filterBtn}>
-              <Filter size={18} /> <span>Filters</span> <ChevronDown size={16} />
-            </button>
+            {/* REMOVED: Filter Button */}
           </div>
           <button onClick={() => openModal()} style={styles.primaryBtn}>
             <Plus size={20} /> New Task
@@ -156,7 +154,7 @@ const AgentTaskDashboard = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} style={styles.emptyState}>Updating...</td></tr>
+                  <tr><td colSpan={6} style={styles.emptyState}>Syncing...</td></tr>
                 ) : tasks.length === 0 ? (
                   <tr><td colSpan={6} style={styles.emptyState}>No tasks found.</td></tr>
                 ) : tasks.map((task, idx) => (
@@ -217,40 +215,20 @@ const AgentTaskDashboard = () => {
 };
 
 const styles = {
-  // Container: flex-1 ensures it sits correctly next to the Navbar
   pageContainer: { flex: 1, minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
-  
   header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '700', fontSize: '14px' },
   headerTitle: { fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '16px' },
-  iconBtn: { padding: '8px', border: 'none', backgroundColor: 'transparent', color: '#64748b', cursor: 'pointer' },
+  iconBtn: { padding: '8px', border: 'none', backgroundColor: 'transparent', color: '#64748b', borderRadius: '50%', cursor: 'pointer' },
   avatar: { width: '40px', height: '40px', backgroundColor: '#e2e8f0', borderRadius: '50%', border: '2px solid white' },
-  
   contentPadding: { padding: '40px' },
+
   controlsRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px', alignItems: 'center' },
-  
-  // FIX: Space between search and filter
-  searchAndFilter: { display: 'flex', gap: '20px', flex: 1, maxWidth: '600px' },
-  searchWrapper: { position: 'relative', width: '350px' }, // Set a specific width for the search
+  searchAndFilter: { display: 'flex', flex: 1, maxWidth: '500px' }, // Cleaned up flex
+  searchWrapper: { position: 'relative', width: '100%' }, // Expanded to fill container
   searchIcon: { position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
   searchInput: { width: '100%', padding: '12px 16px 12px 48px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontSize: '14px', outline: 'none' },
-  
-  // FIXED: No more overlap
-  filterBtn: { 
-    display: 'flex', 
-    alignItems: 'center', 
-    gap: '8px', 
-    padding: '12px 20px', 
-    backgroundColor: 'white', 
-    border: '1px solid #e2e8f0', 
-    borderRadius: '16px', 
-    fontWeight: '700', 
-    color: '#475569', 
-    cursor: 'pointer', 
-    flexShrink: 0, // Prevents it from being squashed
-    minWidth: '120px' 
-  },
 
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', flexShrink: 0 },
 
@@ -260,13 +238,11 @@ const styles = {
   tabActive: { paddingBottom: '16px', fontSize: '14px', fontWeight: '700', color: '#2563eb', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', position: 'relative' },
   tabCount: { fontWeight: '900', marginLeft: '4px' },
   tabIndicator: { position: 'absolute', bottom: 0, left: 0, width: '100%', height: '3px', backgroundColor: '#2563eb', borderRadius: '10px' },
-  
   priorityRow: { display: 'flex', gap: '16px', marginBottom: '32px' },
   priorityBtn: { padding: '10px 20px', borderRadius: '16px', fontSize: '12px', fontWeight: '900', cursor: 'pointer', display: 'flex', gap: '8px' },
   pHigh: { backgroundColor: '#fee2e2', color: '#dc2626' },
   pMedium: { backgroundColor: '#ffedd5', color: '#ea580c' },
   pLow: { backgroundColor: '#ecfdf5', color: '#10b981' },
-  
   tableWrapper: { border: '1px solid #f1f5f9', borderRadius: '16px', overflow: 'hidden', marginBottom: '24px' },
   table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
   thead: { backgroundColor: '#f8fafc' },
@@ -280,18 +256,15 @@ const styles = {
   badge_high: { backgroundColor: '#fee2e2', color: '#dc2626' },
   badge_medium: { backgroundColor: '#ffedd5', color: '#ea580c' },
   badge_low: { backgroundColor: '#ecfdf5', color: '#10b981' },
-  
   actionContainer: { display: 'flex', alignItems: 'center', gap: '8px' },
   editBtn: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900', cursor: 'pointer' },
   doneBtn: { backgroundColor: '#10b981', color: 'white', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer' },
-  
   footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8', fontSize: '12px', fontWeight: '700' },
   pagination: { display: 'flex', gap: '4px' },
   pageBtn: { width: '36px', height: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: 'white' },
   pageBtnActive: { width: '36px', height: '36px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: 'white', fontWeight: '700' },
   emptyState: { padding: '80px', textAlign: 'center', color: '#94a3b8', fontWeight: '700' },
 
-  // MODAL STYLES
   modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
   modal: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '450px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' },
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
