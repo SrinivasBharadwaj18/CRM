@@ -100,6 +100,7 @@ const AgentTaskDashboard = () => {
 
       <div style={styles.contentPadding}>
         <div style={styles.controlsRow}>
+          {/* FIXED: Explicit Gap and No Overlap */}
           <div style={styles.searchAndFilter}>
             <div style={styles.searchWrapper}>
               <Search style={styles.searchIcon} size={18} />
@@ -110,7 +111,6 @@ const AgentTaskDashboard = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* FIXED: Added flexShrink and fixed width to prevent overlap */}
             <button style={styles.filterBtn}>
               <Filter size={18} /> <span>Filters</span> <ChevronDown size={16} />
             </button>
@@ -156,7 +156,7 @@ const AgentTaskDashboard = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} style={styles.emptyState}>Syncing...</td></tr>
+                  <tr><td colSpan={6} style={styles.emptyState}>Updating...</td></tr>
                 ) : tasks.length === 0 ? (
                   <tr><td colSpan={6} style={styles.emptyState}>No tasks found.</td></tr>
                 ) : tasks.map((task, idx) => (
@@ -217,24 +217,10 @@ const AgentTaskDashboard = () => {
 };
 
 const styles = {
-  // REMOVED: marginLeft completely. flex: 1 makes it fill the space next to sidebar.
-  pageContainer: { 
-    flex: 1, 
-    minHeight: '100vh', 
-    backgroundColor: '#f1f5f9', 
-    fontFamily: 'Inter, sans-serif' 
-  },
-  header: { 
-    backgroundColor: 'white', 
-    borderBottom: '1px solid #e2e8f0', 
-    padding: '16px 32px', 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    position: 'sticky', 
-    top: 0, 
-    zIndex: 10 
-  },
+  // Container: flex-1 ensures it sits correctly next to the Navbar
+  pageContainer: { flex: 1, minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
+  
+  header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '700', fontSize: '14px' },
   headerTitle: { fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '16px' },
@@ -244,8 +230,9 @@ const styles = {
   contentPadding: { padding: '40px' },
   controlsRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px', alignItems: 'center' },
   
-  searchAndFilter: { display: 'flex', gap: '12px', flex: 1, maxWidth: '650px' },
-  searchWrapper: { position: 'relative', flex: 1 },
+  // FIX: Space between search and filter
+  searchAndFilter: { display: 'flex', gap: '20px', flex: 1, maxWidth: '600px' },
+  searchWrapper: { position: 'relative', width: '350px' }, // Set a specific width for the search
   searchIcon: { position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
   searchInput: { width: '100%', padding: '12px 16px 12px 48px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', fontSize: '14px', outline: 'none' },
   
@@ -261,8 +248,8 @@ const styles = {
     fontWeight: '700', 
     color: '#475569', 
     cursor: 'pointer', 
-    flexShrink: 0, // Prevents search bar from crushing it
-    minWidth: '110px' 
+    flexShrink: 0, // Prevents it from being squashed
+    minWidth: '120px' 
   },
 
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#fbbf24', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', flexShrink: 0 },
