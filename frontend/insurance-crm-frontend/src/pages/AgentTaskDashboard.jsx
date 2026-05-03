@@ -56,10 +56,6 @@ const AgentTaskDashboard = () => {
 
   return (
     <div style={styles.pageContainer}>
-      {/* 
-          TOP HEADER 
-          This is now the ONLY header on the page, positioned next to your dark sidebar.
-      */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           Agent Dashboard <ChevronDown size={16} />
@@ -73,7 +69,6 @@ const AgentTaskDashboard = () => {
       </header>
 
       <div style={styles.contentPadding}>
-        {/* SEARCH & ACTIONS */}
         <div style={styles.controlsRow}>
           <div style={styles.searchAndFilter}>
             <div style={styles.searchWrapper}>
@@ -94,7 +89,6 @@ const AgentTaskDashboard = () => {
           </button>
         </div>
 
-        {/* TASK CARD */}
         <div style={styles.card}>
           <div style={styles.tabBar}>
             {[
@@ -189,8 +183,8 @@ const AgentTaskDashboard = () => {
 };
 
 const styles = {
-  // We use exactly 260px to match your dark navbar
-  pageContainer: { marginLeft: '260px', width: 'calc(100% - 260px)', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
+  // CRITICAL FIX: Removed marginLeft and width calc
+  pageContainer: { flex: 1, minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'Inter, sans-serif' },
   
   header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '700', fontSize: '14px' },
