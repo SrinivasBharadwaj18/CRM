@@ -496,3 +496,20 @@ class Task(models.Model):
     def overdue(self):
         from django.utils import timezone
         return (not self.is_completed) and (self.due_date < timezone.now().date())
+
+
+
+class AgentBreak(models.Model):
+    agent = models.ForeignKey('Employee', on_delete=models.CASCADE)
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    # New field to track system-detected idle time
+    is_unmentioned = models.BooleanField(default=False) 
+
+    @property
+    def duration_display(self):
+        if self.end_time:
+            diff = self.end_time - self.start_time
+            minutes, seconds = divmod(diff.seconds, 60)
+            return f"{minutes}m {seconds}s"
+        return "In Progress"

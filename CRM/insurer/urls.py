@@ -28,6 +28,8 @@ from .views import (
     get_agent_tasks,
     complete_agent_task,
     create_agent_task,
+    toggle_break,
+    get_all_breaks,
     AgentEarningsDashboardView
 )
 from django.urls import path, re_path, include
@@ -65,5 +67,9 @@ urlpatterns = [
     path('agent/tasks/counts/', agent_task_counts, name='agent-task-counts'),
     path('agent/tasks/create/', create_agent_task, name='create-agent-task'),
     path('agent/tasks/<int:task_id>/complete/', complete_agent_task, name='complete-agent-task'),
+    path('agent/toggle-break/', toggle_break, name='toggle-break'),
+    
+    # GET: Fetches break history (Admin sees all, Agent sees theirs)
+    path('agent/breaks/', get_all_breaks, name='get-all-breaks'),
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 ]

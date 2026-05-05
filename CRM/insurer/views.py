@@ -22,7 +22,7 @@ from .models import (
     Employee, Lead, MotorLead, HealthLead, LifeLead, 
     Conversion, Insurance, FollowUp, Score, 
     DailyOverallPerformance, Attendance, LeaveRequest,
-    RecruitmentStats,AdminTask, Incentive, Task
+    RecruitmentStats,AdminTask, Incentive, Task, AgentBreak
 )
 from django.db.models import Min, Case, When, Value, IntegerField
 
@@ -995,3 +995,40 @@ def update_agent_task(request, task_id):
         
     except Task.DoesNotExist:
         return Response({"error": "Task not found"}, status=404)
+    
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_break(request):
+    agent = request.user
+    # Check if there is an active break (no end_time)
+    active_break = AgentBreak.objects.filter(agent=agent, end_time__isnull=True).first()
+
+    if active_break:
+        # End the break
+        active_break.end_time = timezone.now()
+        active_break.save()
+        return Response({"status": "back_to_work", "duration": active_break.duration})
+    else:
+        # Start a new break
+        AgentBreak.objects.create(agent=agent)
+        return Response({"status": "on_break"})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_breaks(request):
+    # Logic for Admin to see everyone, or Agent to see their own
+    if request.user.role in ['owner', 'lead']:
+        breaks = AgentBreak.objects.all().order_by('-start_time')
+    else:
+        breaks = AgentBreak.objects.filter(agent=request.user).order_by('-start_time')
+        
+    data = [{
+        "agent_name": b.agent.name,
+        "start": b.start_time,
+        "end": b.end_time,
+        "span": b.duration
+    } for b in breaks]
+    return Response(data)
