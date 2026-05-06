@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
@@ -6,7 +6,7 @@ import api from "../services/api";
 import { 
   LayoutGrid, Users, Briefcase, CalendarDays, 
   CreditCard, BarChart3, Settings, LogOut,
-  PhoneCall, CheckSquare, Wallet, Coffee, Clock 
+  PhoneCall, CheckSquare, Wallet, Coffee, Clock
 } from "lucide-react";
 
 function Navbar({ isOnBreak, setIsOnBreak }) {
@@ -65,8 +65,7 @@ function Navbar({ isOnBreak, setIsOnBreak }) {
                 justifyContent: 'center',
                 margin: '20px 15px 0 15px',
                 borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer'
+                border: 'none'
               }}
             >
               {isOnBreak ? <Clock size={20} /> : <Coffee size={20} />}
@@ -89,32 +88,75 @@ function Navbar({ isOnBreak, setIsOnBreak }) {
   );
 }
 
-const SidebarItem = ({ to, icon, label, active }) => (
-  <Link 
-    to={to} 
-    style={{
-      ...styles.navItem,
-      backgroundColor: active ? "#35579b" : "transparent",
-      color: active ? "#ffffff" : "#2c3e50",
-      borderBottom: "1px solid #d1d9e6",
-    }}
-  >
-    <span style={{ color: active ? "#ffffff" : "#35579b", display: "flex", alignItems: "center" }}>
-      {icon}
-    </span>
-    <span style={{ fontWeight: "600", fontSize: "0.9rem", marginLeft: "12px" }}>
-      {label}
-    </span>
-  </Link>
-);
+const SidebarItem = ({ to, icon, label, active }) => {
+  return (
+    <Link 
+      to={to} 
+      style={{
+        ...styles.navItem,
+        backgroundColor: active ? "#35579b" : "transparent",
+        color: active ? "#ffffff" : "#2c3e50",
+        borderBottom: "1px solid #d1d9e6",
+      }}
+    >
+      <span style={{ 
+        color: active ? "#ffffff" : "#35579b", 
+        display: "flex", 
+        alignItems: "center" 
+      }}>
+        {icon}
+      </span>
+      <span style={{ 
+        fontWeight: "600", 
+        fontSize: "0.9rem",
+        marginLeft: "12px"
+      }}>
+        {label}
+      </span>
+    </Link>
+  );
+};
 
 const styles = {
-  sidebar: { width: "260px", backgroundColor: "#e8eff9", height: "100vh", position: "fixed", left: 0, top: 0, display: "flex", flexDirection: "column", zIndex: 1000, fontFamily: "'Segoe UI', sans-serif", borderRight: "1px solid #bfc9d8" },
+  sidebar: { 
+    width: "260px", 
+    backgroundColor: "#e8eff9", 
+    height: "100vh", 
+    position: "fixed", 
+    left: 0, 
+    top: 0, 
+    display: "flex", 
+    flexDirection: "column", 
+    zIndex: 1000, 
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    borderRight: "1px solid #bfc9d8"
+  },
   navMenu: { flex: 1, display: "flex", flexDirection: "column" },
-  navItem: { display: "flex", alignItems: "center", padding: "16px 20px", textDecoration: "none", transition: "background 0.2s ease" },
-  breakBtn: { boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
+  navItem: { 
+    display: "flex", 
+    alignItems: "center", 
+    padding: "16px 20px", 
+    textDecoration: "none", 
+    transition: "background 0.2s ease",
+    cursor: "pointer"
+  },
+  breakBtn: {
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
   bottomSection: { marginTop: 'auto', paddingBottom: '20px' },
-  logoutBtn: { width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "16px 20px", backgroundColor: "transparent", color: "#e74c3c", border: "none", cursor: "pointer", fontSize: "0.9rem" }
+  logoutBtn: { 
+    width: "100%", 
+    display: "flex", 
+    alignItems: "center", 
+    gap: "12px", 
+    padding: "16px 20px", 
+    backgroundColor: "transparent", 
+    color: "#e74c3c", 
+    border: "none", 
+    cursor: "pointer", 
+    fontSize: "0.9rem" 
+  }
 };
 
 export default Navbar;
