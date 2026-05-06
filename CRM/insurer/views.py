@@ -1048,3 +1048,43 @@ def check_active_break(request):
             "is_unmentioned": active_break.is_unmentioned
         })
     return Response({"active": False})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_notifications(request):
+    now = timezone.now()
+    agent = request.user
+    notifications = []
+
+    # 1. Fetch Overdue Tasks
+    due_tasks = Task.objects.filter(
+        agent=agent,
+        due_date__lte=now,
+        status='pending'
+    )
+    for t in due_tasks:
+        notifications.append({
+            "id": f"task_{t.id}",
+            "type": "TASK",
+            "title": "📌 Task Due",
+            "message": t.title
+        })
+
+    # 2. Fetch Lead Follow-up Deadlines
+    # Assuming your FollowUp model has 'follow_up_date' and 'lead'
+    due_followups = FollowUp.objects.filter(
+        lead__assigned_to=agent, # Adjust based on your Lead/Employee relationship
+        follow_up_date__lte=now,
+        lead__status='follow_up' # Only notify if still in follow-up status
+    ).select_related('lead')
+
+    for f in due_followups:
+        notifications.append({
+            "id": f"follow_{f.id}",
+            "type": "FOLLOW_UP",
+            "title": "📞 Follow-up Needed",
+            "message": f"Call {f.lead.name} now!"
+        })
+
+    return Response(notifications)

@@ -1,16 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import api from "../services/api";
 import { 
   LayoutGrid, 
-  LayoutDashboard, // Add this here
+  LayoutDashboard,
   Users, 
-  Briefcase, 
-  CalendarDays, 
-  CreditCard, 
-  BarChart3, 
   Settings, 
   LogOut,
   PhoneCall, 
@@ -20,7 +16,8 @@ import {
   Clock,
   UserPlus,
   UploadCloud,
-  Landmark 
+  Landmark,
+  Bell // Added Bell icon
 } from "lucide-react";
 
 function Navbar({ isOnBreak, setIsOnBreak }) {
@@ -28,6 +25,40 @@ function Navbar({ isOnBreak, setIsOnBreak }) {
   const dispatch = useDispatch();
   const location = useLocation();
   const { user } = useSelector((state) => state.auth || {});
+  
+  // Notification States
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // 1. Polling Logic for Notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await api.get('/agent/notifications/check/');
+        setNotifications(res.data);
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // 2. Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -47,8 +78,41 @@ function Navbar({ isOnBreak, setIsOnBreak }) {
 
   return (
     <aside style={styles.sidebar}>
-      <nav style={styles.navMenu}>
+      
+      {/* --- NOTIFICATION CENTER SECTION --- */}
+      <div style={styles.headerSection} ref={dropdownRef}>
+        <div style={styles.headerLeft}>
+           <div style={styles.logoCircle}>PH</div>
+           <span style={styles.brandName}>{user?.role === 'owner' ? 'Admin' : 'Agent'}</span>
+        </div>
         
+        <div style={styles.bellWrapper} onClick={() => setShowNotifDropdown(!showNotifDropdown)}>
+          <Bell size={22} color={notifications.length > 0 ? "#e67e22" : "#35579b"} />
+          {notifications.length > 0 && (
+            <span style={styles.badge}>{notifications.length}</span>
+          )}
+
+          {showNotifDropdown && (
+            <div style={styles.notifDropdown}>
+              <div style={styles.notifHeader}>Pending Deadlines</div>
+              <div style={styles.notifList}>
+                {notifications.length === 0 ? (
+                  <div style={styles.emptyNotif}>All caught up! 🎉</div>
+                ) : (
+                  notifications.map((n) => (
+                    <div key={n.id} style={styles.notifItem}>
+                      <div style={styles.notifTitle}>{n.title}</div>
+                      <div style={styles.notifMsg}>{n.message}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <nav style={styles.navMenu}>
         {/* --- ADMIN / OWNER LINKS --- */}
         {(user?.role === 'owner' || user?.role === 'lead') && (
           <>
@@ -145,6 +209,36 @@ const styles = {
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     borderRight: "1px solid #bfc9d8"
   },
+  headerSection: {
+    padding: "20px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottom: "1px solid #bfc9d8",
+    backgroundColor: "#d9e4f5"
+  },
+  headerLeft: { display: "flex", alignItems: "center", gap: "10px" },
+  logoCircle: { width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#35579b", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.8rem" },
+  brandName: { fontWeight: "800", color: "#35579b", fontSize: "1rem" },
+  
+  // BELL & DROPDOWN STYLES
+  bellWrapper: { position: "relative", cursor: "pointer", padding: "5px" },
+  badge: { 
+    position: "absolute", top: "-2px", right: "-2px", backgroundColor: "#e74c3c", color: "white", 
+    fontSize: "10px", fontWeight: "bold", borderRadius: "50%", padding: "2px 5px" 
+  },
+  notifDropdown: {
+    position: "absolute", top: "40px", right: "0", width: "240px", backgroundColor: "white",
+    borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", zIndex: 1100,
+    border: "1px solid #bfc9d8", overflow: "hidden"
+  },
+  notifHeader: { padding: "12px", backgroundColor: "#35579b", color: "white", fontSize: "0.8rem", fontWeight: "bold" },
+  notifList: { maxHeight: "300px", overflowY: "auto" },
+  notifItem: { padding: "12px", borderBottom: "1px solid #f0f0f0", "&:lastChild": { borderBottom: "none" } },
+  notifTitle: { fontSize: "0.8rem", fontWeight: "700", color: "#2c3e50" },
+  notifMsg: { fontSize: "0.75rem", color: "#7f8c8d", marginTop: "2px" },
+  emptyNotif: { padding: "20px", textAlign: "center", fontSize: "0.8rem", color: "#95a5a6" },
+
   navMenu: { flex: 1, display: "flex", flexDirection: "column" },
   navItem: { 
     display: "flex", 
