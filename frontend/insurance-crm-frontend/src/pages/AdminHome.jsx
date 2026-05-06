@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import Navbar from "../components/Navbar";
 
@@ -19,20 +19,25 @@ function AdminHome() {
     return () => clearInterval(interval);
   }, []);
 
-  if (!data) return <div style={styles.loading}>Initializing Admin Suite...</div>;
-
   // --- Calculations for Funnel Percentages ---
-  const totalLeads = data.funnel.new || 1; // Base number for percentage calculation
-  const discussionPer = totalLeads > 0 ? Math.round((data.funnel.follow_up / totalLeads) * 100) : 0;
-  const convertedPer = totalLeads > 0 ? Math.round((data.funnel.converted / totalLeads) * 100) : 0;
-  const lostPer = totalLeads > 0 ? Math.round((data.funnel.lost / totalLeads) * 100) : 0;
+  const funnelStats = useMemo(() => {
+    if (!data) return null;
+    const total = data.funnel.new || 1;
+    return {
+      discussionPer: Math.round((data.funnel.follow_up / total) * 100),
+      convertedPer: Math.round((data.funnel.converted / total) * 100),
+      lostPer: Math.round((data.funnel.lost / total) * 100),
+    };
+  }, [data]);
+
+  if (!data) return <div style={styles.loading}>Initializing Admin Suite...</div>;
 
   return (
     <div style={styles.page}>
       <Navbar />
       
       {/* SIDEBAR */}
-      <div style={styles.sidebar}>
+      <aside style={styles.sidebar}>
          <div style={styles.sidebarHeader}>CRM PRO</div>
          {['Dashboard', 'Employee Management', 'Leads Analytics', 'Attendance', 'Revenue', 'Settings'].map(item => (
              <div key={item} style={{
@@ -43,11 +48,11 @@ function AdminHome() {
                  {item}
              </div>
          ))}
-      </div>
+      </aside>
 
       {/* MAIN CONTENT AREA */}
       <main style={styles.mainContent}>
-        {/* TOP TILES */}
+        {/* TOP TILES - Compacted */}
         <div style={styles.tileRow}>
           <Tile label="Active Agents" value={data.tiles.active_agents} icon="🎧" color="#3b82f6" />
           <Tile label="Total Leads" value={data.tiles.total_leads} icon="📈" color="#0ea5e9" />
@@ -58,9 +63,9 @@ function AdminHome() {
         <div style={styles.dashboardGrid}>
           
           {/* Column 1: Expiries & Leaderboard */}
-          <div style={{ gridColumn: "span 4" }}>
+          <div style={{ gridColumn: "span 3", display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <Card title="🚨 Urgent Expiries (7 Days)">
-                {data.expiries.length > 0 ? data.expiries.map((exp, i) => (
+                {data.expiries.length > 0 ? data.expiries.slice(0, 3).map((exp, i) => (
                     <div key={i} style={styles.expiryRow}>
                         <div>
                             <div style={styles.hireName}>{exp.customer}</div>
@@ -71,16 +76,15 @@ function AdminHome() {
                 )) : <div style={styles.emptyState}>No policies expiring soon.</div>}
             </Card>
 
-            {/* This was moved from column 2 to balance column 1 better now that the Funnel takes more height */}
             <Card title="🏆 Agent Leaderboard">
-                {data.leaderboard.map((agent, i) => (
+                {data.leaderboard.slice(0, 4).map((agent, i) => (
                     <div key={i} style={styles.dirRow}>
                         <div style={styles.avatarSmall}>{i + 1}</div>
                         <div style={{flex: 1}}>
-                            <div style={{fontWeight: '700', fontSize: '0.85rem'}}>{agent.name}</div>
-                            <div style={{fontSize: '0.7rem', color: '#64748b'}}>{agent.sales} Sales</div>
+                            <div style={{fontWeight: '700', fontSize: '0.75rem'}}>{agent.name}</div>
+                            <div style={{fontSize: '0.65rem', color: '#64748b'}}>{agent.sales} Sales</div>
                         </div>
-                        <span style={{fontWeight: '800', fontSize: '0.8rem', color: '#10b981'}}>
+                        <span style={{fontWeight: '800', fontSize: '0.75rem', color: '#10b981'}}>
                             ₹{agent.revenue.toLocaleString()}
                         </span>
                     </div>
@@ -88,57 +92,39 @@ function AdminHome() {
             </Card>
           </div>
 
-          {/* Column 2: Visual Conversion Funnel & Revenue Snippets */}
-          <div style={{ gridColumn: "span 5" }}>
-            
-            {/* --- UPDATED: Diagrammatic Funnel --- */}
-            <Card title="📊 Conversion Funnel">
-                <div style={styles.funnelContainer}>
-                    {/* Visual Diagram Left */}
-                    <div style={styles.funnelDiagram}>
-                        <div style={styles.stage1Shape}>New Leads</div>
-                        <div style={styles.stage2Slope} />
-                        <div style={styles.stage2Shape}>In Discussion</div>
-                        <div style={styles.stage3Slope} />
-                        <div style={styles.stage3Shape}>Converted</div>
+          {/* Column 2: CONICAL FUNNEL */}
+          <div style={{ gridColumn: "span 6" }}>
+            <Card title="🎯 Conversion Funnel Analytics">
+                <div style={styles.funnelWrapper}>
+                    {/* Visual Conical Diagram */}
+                    <div style={styles.conicalFunnel}>
+                        <div style={styles.funnelSegment1}>New Leads</div>
+                        <div style={styles.funnelSegment2}>Discussion</div>
+                        <div style={styles.funnelSegment3}>Converted</div>
                     </div>
 
-                    {/* Detailed Data Callouts Right */}
-                    <div style={styles.funnelDetails}>
-                        <div style={styles.funnelDetailRow}>
-                            <span style={styles.detailLabel}>Total New Leads</span>
-                            <div style={styles.detailValueContainer}>
-                                <span style={styles.detailValueMain}>{data.funnel.new}</span>
-                                <span style={styles.detailPercentage}> (100%)</span>
-                            </div>
+                    {/* Funnel Legend / Data */}
+                    <div style={styles.funnelLegend}>
+                        <div style={styles.legendItem}>
+                            <span style={styles.legendLabel}>Leads Received</span>
+                            <span style={styles.legendValue}>{data.funnel.new} <small>(100%)</small></span>
                         </div>
-
-                        <div style={styles.funnelDetailRow}>
-                            <span style={styles.detailLabel}>In Discussion</span>
-                            <div style={styles.detailValueContainer}>
-                                <span style={{...styles.detailValueMain, color: '#f59e0b'}}>{data.funnel.follow_up}</span>
-                                <span style={styles.detailPercentage}> ({discussionPer}%)</span>
-                            </div>
+                        <div style={styles.legendItem}>
+                            <span style={styles.legendLabel}>Contacted / In Discussion</span>
+                            <span style={{...styles.legendValue, color: '#3b82f6'}}>{data.funnel.follow_up} <small>({funnelStats.discussionPer}%)</small></span>
                         </div>
-
-                        <div style={styles.funnelDetailRow}>
-                            <span style={styles.detailLabel}>Policies Issued / Converted</span>
-                            <div style={styles.detailValueContainer}>
-                                <span style={{...styles.detailValueMain, color: '#10b981'}}>{data.funnel.converted}</span>
-                                <span style={styles.detailPercentage}> ({convertedPer}%)</span>
-                            </div>
+                        <div style={styles.legendItem}>
+                            <span style={styles.legendLabel}>Policies Issued</span>
+                            <span style={{...styles.legendValue, color: '#10b981'}}>{data.funnel.converted} <small>({funnelStats.convertedPer}%)</small></span>
                         </div>
-
-                        {/* Separate Dropout Indicator */}
-                        <div style={styles.dropoutRow}>
-                            <span style={{color: '#94a3b8', fontSize: '1.2rem'}}>🚷</span>
-                            <span>Leads Not Interested: <strong style={{color: '#ef4444', marginLeft: '5px'}}>{data.funnel.lost} ({lostPer}%)</strong></span>
+                        <div style={styles.legendItem}>
+                            <span style={styles.legendLabel}>Not Interested</span>
+                            <span style={{...styles.legendValue, color: '#ef4444'}}>{data.funnel.lost} <small>({funnelStats.lostPer}%)</small></span>
                         </div>
-
-                        {/* Distinct Success Rate */}
-                        <div style={styles.successRow}>
-                            <span>🏆 Overall Success Rate</span>
-                            <span style={{fontSize: '1.2rem', fontWeight: '900', color: '#1e293b'}}>{data.funnel.rate}</span>
+                        
+                        <div style={styles.successHighlight}>
+                             <span>Success Rate:</span>
+                             <span style={{fontSize: '1.2rem'}}>{data.funnel.rate}</span>
                         </div>
                     </div>
                 </div>
@@ -146,44 +132,37 @@ function AdminHome() {
 
             <div style={styles.twoCol}>
                 <Card title="Total Revenue">
-                    <div style={{fontSize: '0.7rem', color: '#64748b'}}>Pipeline Total</div>
-                    <h2 style={{color: '#1e293b', margin: '5px 0'}}>₹{data.revenue.total.toLocaleString()}</h2>
-                    <div style={{fontSize: '0.65rem', color: '#10b981', fontWeight: '700'}}>Growth: +12%</div>
+                    <h2 style={{color: '#1e293b', margin: '2px 0', fontSize: '1.2rem'}}>₹{data.revenue.total.toLocaleString()}</h2>
+                    <div style={{fontSize: '0.65rem', color: '#10b981', fontWeight: '700'}}>+12.5% Growth</div>
                 </Card>
-                <Card title="Payout Status">
-                    <div style={styles.leaveItem}><span>Collected</span> <span style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</span></div>
-                    <div style={styles.leaveItem}><span>Pending</span> <span style={{color: '#f59e0b'}}>₹{data.revenue.pending.toLocaleString()}</span></div>
+                <Card title="Attendance Snapshot">
+                    <div style={styles.chartRow}>
+                        <Donut value={data.attendance.present} label="Present" color="#10b981" />
+                        <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
+                    </div>
                 </Card>
             </div>
           </div>
 
-          {/* Column 3: Revenue Pipeline & Top Gen */}
-          <div style={{ gridColumn: "span 3" }}>
+          {/* Column 3: Pipeline & Top Gen */}
+          <div style={{ gridColumn: "span 3", display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <Card title="💰 Revenue Pipeline">
-                <div style={{marginBottom: '20px'}}>
-                    <div style={styles.progressLabel}><span>Collection Progress</span> <span>{Math.round((data.revenue.paid / data.revenue.total) * 100) || 0}%</span></div>
+                <div style={{marginBottom: '15px'}}>
+                    <div style={styles.progressLabel}><span>Progress</span> <span>{Math.round((data.revenue.paid / data.revenue.total) * 100) || 0}%</span></div>
                     <div style={styles.progressBarBg}>
                         <div style={{...styles.progressBarFill, width: `${(data.revenue.paid / data.revenue.total) * 100}%`}}></div>
                     </div>
                 </div>
-                <div style={styles.listLine}><span>Actual Banked</span> <strong style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</strong></div>
-                <div style={styles.listLine}><span>Uncollected</span> <strong style={{color: '#ef4444'}}>₹{data.revenue.pending.toLocaleString()}</strong></div>
-            </Card>
-
-            <Card title="Attendance Overview">
-                <div style={styles.chartRow}>
-                    <Donut value={data.attendance.present} label="Present" color="#10b981" />
-                    <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
-                    <Donut value={data.attendance.late} label="Late" color="#f59e0b" />
-                </div>
+                <div style={styles.listLine}><span>Banked</span> <strong>₹{data.revenue.paid.toLocaleString()}</strong></div>
+                <div style={styles.listLine}><span>Pending</span> <strong style={{color: '#ef4444'}}>₹{data.revenue.pending.toLocaleString()}</strong></div>
             </Card>
 
             <Card title="Top Revenue Generator">
-                <div style={{textAlign: 'center', padding: '10px 0'}}>
+                <div style={{textAlign: 'center', padding: '5px 0'}}>
                     <div style={styles.avatarLarge}>{data.leaderboard[0]?.name[0]}</div>
-                    <div style={{fontWeight: '800', marginTop: '10px', color: '#1e293b'}}>{data.leaderboard[0]?.name}</div>
-                    <div style={{fontSize: '0.8rem', color: '#3b82f6', fontWeight: '700'}}>
-                        Top Sales: ₹{data.leaderboard[0]?.revenue.toLocaleString()}
+                    <div style={{fontWeight: '800', marginTop: '8px', fontSize: '0.85rem', color: '#1e293b'}}>{data.leaderboard[0]?.name}</div>
+                    <div style={{fontSize: '0.75rem', color: '#3b82f6', fontWeight: '700'}}>
+                        ₹{data.leaderboard[0]?.revenue.toLocaleString()}
                     </div>
                 </div>
             </Card>
@@ -216,96 +195,92 @@ const Card = ({ title, children }) => (
 const Donut = ({ value, label, color }) => (
     <div style={{textAlign: 'center'}}>
         <div style={{...styles.donut, borderColor: color}}>{value}</div>
-        <div style={{fontSize: '0.7rem', marginTop: '8px', color: '#64748b', fontWeight: '600'}}>{label}</div>
+        <div style={{fontSize: '0.6rem', marginTop: '4px', color: '#64748b', fontWeight: '700'}}>{label}</div>
     </div>
 );
 
-
-// --- UPDATED STYLES ---
+// --- CSS STYLES ---
 const styles = {
   page: { 
     display: 'flex', 
-    backgroundColor: '#f1f5f9', 
-    minHeight: '100vh', 
+    backgroundColor: '#f8fafc', 
+    height: '100vh', 
     fontFamily: "'Inter', sans-serif",
-    width: '100%',
-    overflowX: 'hidden'
+    width: '100vw',
+    overflow: 'hidden' // No scrolling
   },
   sidebar: { 
     width: '240px', 
     backgroundColor: '#1e293b', 
     color: 'white', 
-    paddingTop: '90px', 
-    position: 'fixed', 
-    height: '100vh', 
-    zIndex: 10,
-    top: 0,
-    left: 0
+    paddingTop: '80px', 
+    height: '100vh',
+    flexShrink: 0 
   },
-  sidebarHeader: { padding: '20px 25px', fontSize: '1.2rem', fontWeight: '900', color: '#3b82f6', letterSpacing: '1px' },
-  sidebarItem: { padding: '15px 25px', fontSize: '0.85rem', cursor: 'pointer', color: '#94a3b8', fontWeight: '600' },
+  sidebarHeader: { padding: '15px 25px', fontSize: '1rem', fontWeight: '900', color: '#3b82f6' },
+  sidebarItem: { padding: '12px 25px', fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' },
   
   mainContent: { 
     flex: 1, 
-    marginLeft: '240px', 
-    padding: '120px 30px 40px',
-    width: 'calc(100% - 240px)', 
-    boxSizing: 'border-box'
+    padding: '100px 25px 25px', // Reduced padding
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px'
   },
   
-  loading: { textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', color: '#64748b' },
-  tileRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '25px' },
-  tile: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #e2e8f0' },
-  tileIcon: { width: '48px', height: '48px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' },
-  tileLabel: { fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' },
-  tileValue: { fontSize: '1.4rem', fontWeight: '800', color: '#1e293b' },
-  dashboardGrid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px' },
-  card: { backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px', border: '1px solid #e2e8f0' },
-  cardTitle: { fontSize: '0.8rem', fontWeight: '800', color: '#475569', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  listLine: { display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: '0.8rem', borderBottom: '1px solid #f8fafc' },
-  dirRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
-  avatarSmall: { width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.7rem', color: '#64748b' },
-  avatarLarge: { width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', margin: '0 auto' },
-  chartRow: { display: 'flex', justifyContent: 'space-around', padding: '10px 0' },
-  donut: { width: '55px', height: '55px', borderRadius: '50%', border: '5px solid', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' },
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' },
-  leaveItem: { display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '0.75rem', fontWeight: '700' },
-  expiryRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
-  expiryDateTag: { backgroundColor: '#fee2e2', color: '#b91c1c', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '800' },
-  hireName: { fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' },
-  hireRole: { fontSize: '0.7rem', color: '#94a3b8' },
-  progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '5px' },
-  progressBarBg: { height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: '#10b981', borderRadius: '4px' },
-  emptyState: { textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '0.8rem' },
+  tileRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' },
+  tile: { backgroundColor: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #e2e8f0' },
+  tileIcon: { width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' },
+  tileLabel: { fontSize: '0.65rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' },
+  tileValue: { fontSize: '1.2rem', fontWeight: '800', color: '#1e293b' },
 
-  // --- FUNNEL STYLES ---
-  funnelContainer: { display: 'flex', gap: '30px', alignItems: 'center', padding: '10px 0' },
+  dashboardGrid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '15px', flex: 1 },
+  card: { backgroundColor: 'white', borderRadius: '12px', padding: '15px', border: '1px solid #e2e8f0', height: 'fit-content' },
+  cardTitle: { fontSize: '0.7rem', fontWeight: '800', color: '#94a3b8', marginBottom: '12px', textTransform: 'uppercase' },
   
-  // Left: Diagrammatic Figure
-  funnelDiagram: { display: 'flex', flexDirection: 'column', alignItems: 'center', width: '130px', color: 'white', fontSize: '0.65rem', fontWeight: '700' },
-  stage1Shape: { width: '130px', height: '45px', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' },
-  
-  // These slopes create the funnel effect using border trick
-  stage2Slope: { width: '0', height: '0', borderLeft: '15px solid transparent', borderRight: '15px solid transparent', borderTop: '20px solid #3b82f6' },
-  stage2Shape: { width: '100px', height: '45px', backgroundColor: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  
-  stage3Slope: { width: '0', height: '0', borderLeft: '15px solid transparent', borderRight: '15px solid transparent', borderTop: '20px solid #f59e0b' },
-  stage3Shape: { width: '70px', height: '45px', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', textAlign: 'center' },
+  // FUNNEL SPECIFIC
+  funnelWrapper: { display: 'flex', gap: '20px', alignItems: 'center', padding: '10px 0' },
+  conicalFunnel: { display: 'flex', flexDirection: 'column', width: '180px', gap: '2px' },
+  funnelSegment1: {
+    height: '50px', backgroundColor: '#2563eb', color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    clipPath: 'polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%)'
+  },
+  funnelSegment2: {
+    height: '50px', backgroundColor: '#3b82f6', color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    clipPath: 'polygon(15% 0%, 85% 0%, 70% 100%, 30% 100%)'
+  },
+  funnelSegment3: {
+    height: '50px', backgroundColor: '#10b981', color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    clipPath: 'polygon(30% 0%, 70% 0%, 55% 100%, 45% 100%)'
+  },
+  funnelLegend: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' },
+  legendItem: { display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid #f1f5f9' },
+  legendLabel: { fontSize: '0.75rem', color: '#64748b', fontWeight: '500' },
+  legendValue: { fontSize: '0.85rem', fontWeight: '800', color: '#1e293b' },
+  successHighlight: { 
+    marginTop: '10px', backgroundColor: '#f0fdf4', border: '1px dashed #10b981', 
+    padding: '10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between',
+    alignItems: 'center', color: '#15803d', fontWeight: '800', fontSize: '0.85rem' 
+  },
 
-  // Right: Callouts
-  funnelDetails: { flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' },
-  funnelDetailRow: { borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' },
-  detailLabel: { fontSize: '0.7rem', color: '#64748b', fontWeight: '600', marginBottom: '3px' },
-  detailValueContainer: { display: 'flex', alignItems: 'baseline', gap: '5px' },
-  detailValueMain: { fontSize: '1.2rem', fontWeight: '800', color: '#3b82f6' },
-  detailPercentage: { fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' },
-  
-  // Dropout/Dropout row
-  dropoutRow: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#475569', backgroundColor: '#fff1f2', padding: '10px', borderRadius: '8px', marginTop: '5px', fontWeight: '500' },
-  
-  // Distinct Success Rate callout at bottom right
-  successRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', padding: '12px', border: '2px solid #10b981', borderRadius: '10px', backgroundColor: '#ecfdf5', fontSize: '0.85rem', fontWeight: '700', color: '#15803d' }
+  listLine: { display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '0.75rem', borderBottom: '1px solid #f8fafc' },
+  dirRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '1px solid #f8fafc' },
+  avatarSmall: { width: '24px', height: '24px', borderRadius: '4px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.6rem', color: '#64748b' },
+  avatarLarge: { width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem', margin: '0 auto' },
+  chartRow: { display: 'flex', justifyContent: 'space-around' },
+  donut: { width: '40px', height: '40px', borderRadius: '50%', border: '4px solid', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.7rem' },
+  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' },
+  expiryRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f8fafc' },
+  expiryDateTag: { backgroundColor: '#fee2e2', color: '#b91c1c', padding: '3px 6px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: '800' },
+  hireName: { fontSize: '0.75rem', fontWeight: '700', color: '#1e293b' },
+  hireRole: { fontSize: '0.65rem', color: '#94a3b8' },
+  progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: '700', color: '#64748b', marginBottom: '4px' },
+  progressBarBg: { height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: '#10b981' },
+  loading: { textAlign: 'center', marginTop: '100px', fontSize: '1rem', color: '#64748b' }
 };
 
 export default AdminHome;
