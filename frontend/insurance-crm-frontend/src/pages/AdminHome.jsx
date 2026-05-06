@@ -293,7 +293,7 @@ const styles = {
   barStack: { position: 'relative', width: '20px', height: '100px', borderRadius: '4px', overflow: 'hidden' },
   barSegment: { position: 'absolute', width: '100%' },
   trendLabel: { marginTop: '8px', fontSize: '0.6rem', color: '#94a3b8', fontWeight: '700' },
-  emptyState: { textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '0.8rem' }
+  emptyState: { textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '0.8rem' },
   funnelContainer: {
   display: 'flex',
   gap: '20px',
