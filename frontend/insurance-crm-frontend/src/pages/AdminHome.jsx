@@ -11,20 +11,22 @@ function AdminHome() {
         const res = await api.get("admin/mega-dashboard/");
         setData(res.data);
       } catch (err) {
-        console.error("Error fetching mega dashboard data", err);
+        console.error("Error fetching dashboard data", err);
       }
     };
+
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  if (!data) return <div style={styles.loading}>Initializing Admin Suite...</div>;
+  if (!data) return <div style={styles.loading}>Loading Dashboard...</div>;
 
   const totalLeads = data.funnel.new || 1;
 
   const discussionPer = Math.round((data.funnel.follow_up / totalLeads) * 100);
   const convertedPer = Math.round((data.funnel.converted / totalLeads) * 100);
+  const lostPer = Math.round((data.funnel.lost / totalLeads) * 100);
 
   return (
     <div style={styles.page}>
@@ -36,8 +38,7 @@ function AdminHome() {
         {['Dashboard', 'Employee Management', 'Leads Analytics', 'Attendance', 'Revenue', 'Settings'].map(item => (
           <div key={item} style={{
             ...styles.sidebarItem,
-            backgroundColor: item === 'Dashboard' ? '#334155' : 'transparent',
-            borderLeft: item === 'Dashboard' ? '4px solid #3b82f6' : '4px solid transparent'
+            backgroundColor: item === 'Dashboard' ? '#334155' : 'transparent'
           }}>
             {item}
           </div>
@@ -47,106 +48,106 @@ function AdminHome() {
       {/* MAIN */}
       <main style={styles.mainContent}>
 
-        {/* TILES */}
+        {/* TOP TILES */}
         <div style={styles.tileRow}>
-          <Tile label="Active Agents" value={data.tiles.active_agents} icon="🎧" color="#3b82f6" />
-          <Tile label="Total Leads" value={data.tiles.total_leads} icon="📈" color="#0ea5e9" />
-          <Tile label="Conversion Rate" value={data.tiles.conversion_rate} icon="🎯" color="#10b981" />
-          <Tile label="Total Employees" value={data.tiles.total_employees} icon="👥" color="#6366f1" />
+          <Tile label="Active Agents" value={data.tiles.active_agents} />
+          <Tile label="Total Leads" value={data.tiles.total_leads} />
+          <Tile label="Conversion Rate" value={data.tiles.conversion_rate} />
+          <Tile label="Total Employees" value={data.tiles.total_employees} />
         </div>
 
         {/* GRID */}
-        <div style={styles.dashboardGrid}>
+        <div style={styles.grid}>
 
           {/* LEFT */}
-          <div style={{ gridColumn: "span 4" }}>
-            <Card title="🚨 Urgent Expiries">
-              {data.expiries.length > 0 ? data.expiries.map((exp, i) => (
-                <div key={i} style={styles.expiryRow}>
-                  <div>
-                    <div style={styles.hireName}>{exp.customer}</div>
-                    <div style={styles.hireRole}>Agent: {exp.agent}</div>
-                  </div>
-                  <div style={styles.expiryDateTag}>{exp.expiry}</div>
+          <div style={{ gridColumn: "span 3" }}>
+            <Card title="Urgent Expiries">
+              {data.expiries.length ? data.expiries.map((e, i) => (
+                <div key={i} style={styles.row}>
+                  <span>{e.customer}</span>
+                  <span>{e.expiry}</span>
                 </div>
-              )) : <div style={styles.emptyState}>No expiries</div>}
+              )) : <div>No expiries</div>}
             </Card>
 
-            <Card title="🏆 Leaderboard">
-              {data.leaderboard.slice(0, 5).map((agent, i) => (
-                <div key={i} style={styles.dirRow}>
-                  <div style={styles.avatarSmall}>{i + 1}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '700' }}>{agent.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{agent.sales} sales</div>
-                  </div>
-                  <strong>₹{agent.revenue.toLocaleString()}</strong>
+            <Card title="Leaderboard">
+              {data.leaderboard.slice(0, 5).map((a, i) => (
+                <div key={i} style={styles.row}>
+                  <span>{i + 1}. {a.name}</span>
+                  <strong>₹{a.revenue}</strong>
                 </div>
               ))}
             </Card>
           </div>
 
           {/* CENTER */}
-          <div style={{ gridColumn: "span 5" }}>
-            <Card title="📊 Conversion Funnel">
-              <div style={styles.funnelContainer}>
+          <div style={{ gridColumn: "span 6" }}>
+            <Card title="Conversion Funnel">
+              <div style={styles.funnelWrapper}>
+
                 {[
-                  { label: "Leads Received", value: data.funnel.new, percent: 100, color: "#2563eb" },
-                  { label: "Contacted", value: data.funnel.follow_up, percent: discussionPer, color: "#3b82f6" },
-                  { label: "Converted", value: data.funnel.converted, percent: convertedPer, color: "#10b981" }
+                  { label: "Leads Received", value: data.funnel.new, percent: 100, width: 100, color: "#2563eb" },
+                  { label: "Contacted", value: data.funnel.follow_up, percent: discussionPer, width: 85, color: "#3b82f6" },
+                  { label: "Converted", value: data.funnel.converted, percent: convertedPer, width: 65, color: "#10b981" },
+                  { label: "Lost", value: data.funnel.lost, percent: lostPer, width: 45, color: "#ef4444" }
                 ].map((item, i) => (
                   <div key={i} style={styles.funnelRow}>
-                    <div
-                      style={{
-                        ...styles.funnelBar,
-                        width: `${item.percent}%`,
-                        backgroundColor: item.color
-                      }}
-                    >
+                    
+                    <div style={{
+                      ...styles.funnelShape,
+                      width: `${item.width}%`,
+                      backgroundColor: item.color
+                    }}>
                       {item.label}
                     </div>
-                    <div style={styles.funnelValue}>
-                      {item.value} ({item.percent}%)
+
+                    <div style={styles.funnelData}>
+                      <div style={styles.value}>{item.value}</div>
+                      <div style={styles.percent}>({item.percent}%)</div>
                     </div>
+
                   </div>
                 ))}
+
               </div>
             </Card>
 
             <div style={styles.twoCol}>
               <Card title="Revenue">
-                <h2>₹{data.revenue.total.toLocaleString()}</h2>
+                <h2>₹{data.revenue.total}</h2>
               </Card>
 
               <Card title="Payout">
-                <div>Paid: ₹{data.revenue.paid.toLocaleString()}</div>
-                <div>Pending: ₹{data.revenue.pending.toLocaleString()}</div>
+                <div>Paid: ₹{data.revenue.paid}</div>
+                <div>Pending: ₹{data.revenue.pending}</div>
               </Card>
             </div>
           </div>
 
           {/* RIGHT */}
           <div style={{ gridColumn: "span 3" }}>
-            <Card title="💰 Pipeline">
-              <div style={styles.progressBarBg}>
+            <Card title="Pipeline">
+              <div style={styles.barBg}>
                 <div style={{
-                  ...styles.progressBarFill,
+                  ...styles.barFill,
                   width: `${(data.revenue.paid / data.revenue.total) * 100}%`
                 }} />
               </div>
             </Card>
 
             <Card title="Attendance">
-              <div style={styles.chartRow}>
-                <Donut value={data.attendance.present} label="Present" color="#10b981" />
-                <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
-                <Donut value={data.attendance.late} label="Late" color="#f59e0b" />
+              <div style={styles.attendance}>
+                <Donut value={data.attendance.present} label="Present" />
+                <Donut value={data.attendance.absent} label="Absent" />
+                <Donut value={data.attendance.late} label="Late" />
               </div>
             </Card>
 
             <Card title="Top Performer">
-              <div style={{ textAlign: 'center' }}>
-                <div style={styles.avatarLarge}>{data.leaderboard[0]?.name[0]}</div>
+              <div style={{ textAlign: "center" }}>
+                <div style={styles.avatar}>
+                  {data.leaderboard[0]?.name?.[0]}
+                </div>
                 <div>{data.leaderboard[0]?.name}</div>
               </div>
             </Card>
@@ -159,124 +160,162 @@ function AdminHome() {
 }
 
 /* COMPONENTS */
-const Tile = ({ label, value, icon, color }) => (
+
+const Tile = ({ label, value }) => (
   <div style={styles.tile}>
-    <div style={{ ...styles.tileIcon, backgroundColor: `${color}20`, color }}>{icon}</div>
-    <div>
-      <div style={styles.tileLabel}>{label}</div>
-      <div style={styles.tileValue}>{value}</div>
-    </div>
+    <div>{label}</div>
+    <strong>{value}</strong>
   </div>
 );
 
 const Card = ({ title, children }) => (
   <div style={styles.card}>
-    <h4 style={styles.cardTitle}>{title}</h4>
+    <h4>{title}</h4>
     {children}
   </div>
 );
 
-const Donut = ({ value, label, color }) => (
+const Donut = ({ value, label }) => (
   <div style={{ textAlign: 'center' }}>
-    <div style={{ ...styles.donut, borderColor: color }}>{value}</div>
+    <div style={styles.donut}>{value}</div>
     <div>{label}</div>
   </div>
 );
 
 /* STYLES */
+
 const styles = {
+
   page: {
-    display: 'flex',
-    height: '100vh',
-    overflow: 'hidden',
-    backgroundColor: '#f1f5f9'
+    display: "flex",
+    height: "100vh",
+    overflow: "hidden",
+    background: "#f1f5f9"
   },
 
   sidebar: {
-    width: '240px',
-    height: '100vh',
-    backgroundColor: '#1e293b',
-    color: 'white',
-    paddingTop: '90px'
+    width: 240,
+    background: "#1e293b",
+    color: "white",
+    paddingTop: 80
   },
 
-  sidebarHeader: { padding: 20, fontWeight: 'bold' },
-  sidebarItem: { padding: 15, cursor: 'pointer' },
+  sidebarHeader: { padding: 20, fontWeight: "bold" },
+  sidebarItem: { padding: 15 },
 
   mainContent: {
     flex: 1,
-    marginLeft: '240px',
-    padding: '90px 20px',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
+    marginLeft: 240,
+    padding: "80px 20px",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden"
   },
 
   tileRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
     gap: 10
   },
 
   tile: {
-    background: 'white',
+    background: "white",
     padding: 15,
-    borderRadius: 10,
-    display: 'flex',
-    gap: 10
+    borderRadius: 10
   },
 
-  tileIcon: { width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  tileLabel: { fontSize: 12 },
-  tileValue: { fontSize: 18, fontWeight: 'bold' },
-
-  dashboardGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(12,1fr)',
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(12,1fr)",
     gap: 10,
-    flex: 1,
-    overflow: 'hidden'
+    flex: 1
   },
 
   card: {
-    background: 'white',
+    background: "white",
     padding: 15,
     borderRadius: 10,
-    display: 'flex',
-    flexDirection: 'column'
+    height: "100%"
   },
 
-  cardTitle: { fontSize: 14, marginBottom: 10 },
-
-  funnelContainer: { display: 'flex', flexDirection: 'column', gap: 10 },
-  funnelRow: { display: 'flex', alignItems: 'center', gap: 10 },
-
-  funnelBar: {
-    height: 30,
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    paddingLeft: 10,
-    borderRadius: 5
+  row: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 8
   },
 
-  funnelValue: { fontSize: 12, fontWeight: 'bold' },
+  /* FUNNEL */
 
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 },
+  funnelWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12
+  },
 
-  progressBarBg: { height: 8, background: '#eee' },
-  progressBarFill: { height: '100%', background: '#10b981' },
+  funnelRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10
+  },
 
-  chartRow: { display: 'flex', justifyContent: 'space-around' },
-  donut: { width: 50, height: 50, border: '5px solid', borderRadius: '50%' },
+  funnelShape: {
+    height: 40,
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 6,
+    margin: "0 auto",
+    fontWeight: "bold"
+  },
 
-  avatarSmall: { width: 25, height: 25, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  avatarLarge: { width: 50, height: 50, background: '#3b82f6', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  funnelData: {
+    width: 80
+  },
 
-  expiryRow: { display: 'flex', justifyContent: 'space-between' },
-  expiryDateTag: { background: '#fee2e2', padding: 5 },
+  value: { fontWeight: "bold" },
+  percent: { fontSize: 12, color: "#64748b" },
 
-  emptyState: { textAlign: 'center' }
+  twoCol: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10
+  },
+
+  barBg: { height: 8, background: "#eee" },
+  barFill: { height: "100%", background: "#10b981" },
+
+  attendance: {
+    display: "flex",
+    justifyContent: "space-around"
+  },
+
+  donut: {
+    width: 50,
+    height: 50,
+    border: "5px solid #10b981",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: "50%",
+    background: "#3b82f6",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "auto"
+  },
+
+  loading: {
+    textAlign: "center",
+    marginTop: 100
+  }
 };
 
 export default AdminHome;
