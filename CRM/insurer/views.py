@@ -1034,3 +1034,17 @@ def get_all_breaks(request):
         "span": b.duration
     } for b in breaks]
     return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_active_break(request):
+    """Used by App.jsx to see if the UI should be locked on refresh"""
+    active_break = AgentBreak.objects.filter(agent=request.user, end_time__isnull=True).first()
+    
+    if active_break:
+        return Response({
+            "active": True,
+            "start_time": active_break.start_time,
+            "is_unmentioned": active_break.is_unmentioned
+        })
+    return Response({"active": False})

@@ -510,12 +510,20 @@ class Task(models.Model):
 
 
 
+
 class AgentBreak(models.Model):
     agent = models.ForeignKey('Employee', on_delete=models.CASCADE)
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
-    # New field to track system-detected idle time
     is_unmentioned = models.BooleanField(default=False) 
+
+    @property
+    def duration(self):
+        """Returns duration in minutes for the toggle_break view"""
+        if self.end_time:
+            delta = self.end_time - self.start_time
+            return round(delta.total_seconds() / 60, 2)
+        return 0
 
     @property
     def duration_display(self):
