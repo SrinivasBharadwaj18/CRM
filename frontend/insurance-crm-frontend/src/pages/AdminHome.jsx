@@ -21,6 +21,12 @@ function AdminHome() {
 
   if (!data) return <div style={styles.loading}>Initializing Admin Suite...</div>;
 
+  // --- Calculations for Funnel Percentages ---
+  const totalLeads = data.funnel.new || 1; // Base number for percentage calculation
+  const discussionPer = totalLeads > 0 ? Math.round((data.funnel.follow_up / totalLeads) * 100) : 0;
+  const convertedPer = totalLeads > 0 ? Math.round((data.funnel.converted / totalLeads) * 100) : 0;
+  const lostPer = totalLeads > 0 ? Math.round((data.funnel.lost / totalLeads) * 100) : 0;
+
   return (
     <div style={styles.page}>
       <Navbar />
@@ -51,7 +57,7 @@ function AdminHome() {
 
         <div style={styles.dashboardGrid}>
           
-          {/* Column 1: Expiries & Funnel */}
+          {/* Column 1: Expiries & Leaderboard */}
           <div style={{ gridColumn: "span 4" }}>
             <Card title="🚨 Urgent Expiries (7 Days)">
                 {data.expiries.length > 0 ? data.expiries.map((exp, i) => (
@@ -65,16 +71,7 @@ function AdminHome() {
                 )) : <div style={styles.emptyState}>No policies expiring soon.</div>}
             </Card>
 
-            <Card title="📊 Conversion Funnel">
-                <div style={styles.listLine}><span>New Leads</span> <strong style={{color: '#3b82f6'}}>{data.funnel.new}</strong></div>
-                <div style={styles.listLine}><span>In Discussion</span> <strong style={{color: '#f59e0b'}}>{data.funnel.follow_up}</strong></div>
-                <div style={styles.listLine}><span>Converted</span> <strong style={{color: '#10b981'}}>{data.funnel.converted}</strong></div>
-                <div style={styles.listLine}><span>Not Interested</span> <strong style={{color: '#ef4444'}}>{data.funnel.lost}</strong></div>
-                <div style={{...styles.listLine, border: 'none', marginTop: '10px'}}>
-                    <span>Success Rate</span> <strong>{data.funnel.rate}</strong>
-                </div>
-            </Card>
-
+            {/* This was moved from column 2 to balance column 1 better now that the Funnel takes more height */}
             <Card title="🏆 Agent Leaderboard">
                 {data.leaderboard.map((agent, i) => (
                     <div key={i} style={styles.dirRow}>
@@ -91,18 +88,60 @@ function AdminHome() {
             </Card>
           </div>
 
-          {/* Column 2: Attendance Snapshot */}
+          {/* Column 2: Visual Conversion Funnel & Revenue Snippets */}
           <div style={{ gridColumn: "span 5" }}>
-            <Card title="Attendance Overview (Today)">
-               <div style={styles.chartRow}>
-                  <Donut value={data.attendance.present} label="Present" color="#10b981" />
-                  <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
-                  <Donut value={data.attendance.late} label="Late" color="#f59e0b" />
-               </div>
-            </Card>
+            
+            {/* --- UPDATED: Diagrammatic Funnel --- */}
+            <Card title="📊 Conversion Funnel">
+                <div style={styles.funnelContainer}>
+                    {/* Visual Diagram Left */}
+                    <div style={styles.funnelDiagram}>
+                        <div style={styles.stage1Shape}>New Leads</div>
+                        <div style={styles.stage2Slope} />
+                        <div style={styles.stage2Shape}>In Discussion</div>
+                        <div style={styles.stage3Slope} />
+                        <div style={styles.stage3Shape}>Converted</div>
+                    </div>
 
-            <Card title="Attendance Trend (Last 7 Days)">
-                <AttendanceTrend trend={data.trend} activeAgents={data.tiles.active_agents} />
+                    {/* Detailed Data Callouts Right */}
+                    <div style={styles.funnelDetails}>
+                        <div style={styles.funnelDetailRow}>
+                            <span style={styles.detailLabel}>Total New Leads</span>
+                            <div style={styles.detailValueContainer}>
+                                <span style={styles.detailValueMain}>{data.funnel.new}</span>
+                                <span style={styles.detailPercentage}> (100%)</span>
+                            </div>
+                        </div>
+
+                        <div style={styles.funnelDetailRow}>
+                            <span style={styles.detailLabel}>In Discussion</span>
+                            <div style={styles.detailValueContainer}>
+                                <span style={{...styles.detailValueMain, color: '#f59e0b'}}>{data.funnel.follow_up}</span>
+                                <span style={styles.detailPercentage}> ({discussionPer}%)</span>
+                            </div>
+                        </div>
+
+                        <div style={styles.funnelDetailRow}>
+                            <span style={styles.detailLabel}>Policies Issued / Converted</span>
+                            <div style={styles.detailValueContainer}>
+                                <span style={{...styles.detailValueMain, color: '#10b981'}}>{data.funnel.converted}</span>
+                                <span style={styles.detailPercentage}> ({convertedPer}%)</span>
+                            </div>
+                        </div>
+
+                        {/* Separate Dropout Indicator */}
+                        <div style={styles.dropoutRow}>
+                            <span style={{color: '#94a3b8', fontSize: '1.2rem'}}>🚷</span>
+                            <span>Leads Not Interested: <strong style={{color: '#ef4444', marginLeft: '5px'}}>{data.funnel.lost} ({lostPer}%)</strong></span>
+                        </div>
+
+                        {/* Distinct Success Rate */}
+                        <div style={styles.successRow}>
+                            <span>🏆 Overall Success Rate</span>
+                            <span style={{fontSize: '1.2rem', fontWeight: '900', color: '#1e293b'}}>{data.funnel.rate}</span>
+                        </div>
+                    </div>
+                </div>
             </Card>
 
             <div style={styles.twoCol}>
@@ -118,9 +157,9 @@ function AdminHome() {
             </div>
           </div>
 
-          {/* Column 3: Revenue Pipeline */}
+          {/* Column 3: Revenue Pipeline & Top Gen */}
           <div style={{ gridColumn: "span 3" }}>
-             <Card title="💰 Revenue Pipeline">
+            <Card title="💰 Revenue Pipeline">
                 <div style={{marginBottom: '20px'}}>
                     <div style={styles.progressLabel}><span>Collection Progress</span> <span>{Math.round((data.revenue.paid / data.revenue.total) * 100) || 0}%</span></div>
                     <div style={styles.progressBarBg}>
@@ -129,9 +168,17 @@ function AdminHome() {
                 </div>
                 <div style={styles.listLine}><span>Actual Banked</span> <strong style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</strong></div>
                 <div style={styles.listLine}><span>Uncollected</span> <strong style={{color: '#ef4444'}}>₹{data.revenue.pending.toLocaleString()}</strong></div>
-             </Card>
+            </Card>
 
-             <Card title="Top Revenue Generator">
+            <Card title="Attendance Overview">
+                <div style={styles.chartRow}>
+                    <Donut value={data.attendance.present} label="Present" color="#10b981" />
+                    <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
+                    <Donut value={data.attendance.late} label="Late" color="#f59e0b" />
+                </div>
+            </Card>
+
+            <Card title="Top Revenue Generator">
                 <div style={{textAlign: 'center', padding: '10px 0'}}>
                     <div style={styles.avatarLarge}>{data.leaderboard[0]?.name[0]}</div>
                     <div style={{fontWeight: '800', marginTop: '10px', color: '#1e293b'}}>{data.leaderboard[0]?.name}</div>
@@ -139,7 +186,7 @@ function AdminHome() {
                         Top Sales: ₹{data.leaderboard[0]?.revenue.toLocaleString()}
                     </div>
                 </div>
-             </Card>
+            </Card>
           </div>
 
         </div>
@@ -173,31 +220,6 @@ const Donut = ({ value, label, color }) => (
     </div>
 );
 
-const AttendanceTrend = ({ trend, activeAgents }) => {
-    const maxVal = activeAgents > 0 ? activeAgents : 1;
-    return (
-        <div style={styles.trendContainer}>
-            {trend.map((day, i) => (
-                <div key={i} style={styles.trendColumn}>
-                    <div style={styles.barStack}>
-                        <div style={{...styles.barSegment, height: '100%', backgroundColor: '#f1f5f9'}} />
-                        <div style={{
-                            ...styles.barSegment, 
-                            height: `${(day.present / maxVal) * 100}%`, 
-                            backgroundColor: '#10b981', bottom: 0
-                        }} />
-                        <div style={{
-                            ...styles.barSegment, 
-                            height: `${(day.late / maxVal) * 100}%`, 
-                            backgroundColor: '#f59e0b', bottom: 0, width: '40%', left: '30%'
-                        }} />
-                    </div>
-                    <span style={styles.trendLabel}>{day.day}</span>
-                </div>
-            ))}
-        </div>
-    );
-};
 
 // --- UPDATED STYLES ---
 const styles = {
@@ -225,10 +247,10 @@ const styles = {
   
   mainContent: { 
     flex: 1, 
-    marginLeft: '240px',        // Pushes content past the sidebar
-    padding: '120px 30px 40px', // Pushes content below the Navbar
-    width: 'calc(100% - 240px)', // Ensures content doesn't exceed screen width
-    boxSizing: 'border-box'     // Prevents padding from causing horizontal scroll
+    marginLeft: '240px', 
+    padding: '120px 30px 40px',
+    width: 'calc(100% - 240px)', 
+    boxSizing: 'border-box'
   },
   
   loading: { textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', color: '#64748b' },
@@ -255,12 +277,35 @@ const styles = {
   progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '5px' },
   progressBarBg: { height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' },
   progressBarFill: { height: '100%', backgroundColor: '#10b981', borderRadius: '4px' },
-  trendContainer: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '140px' },
-  trendColumn: { display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 },
-  barStack: { position: 'relative', width: '20px', height: '100px', borderRadius: '4px', overflow: 'hidden' },
-  barSegment: { position: 'absolute', width: '100%' },
-  trendLabel: { marginTop: '8px', fontSize: '0.6rem', color: '#94a3b8', fontWeight: '700' },
-  emptyState: { textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '0.8rem' }
+  emptyState: { textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '0.8rem' },
+
+  // --- FUNNEL STYLES ---
+  funnelContainer: { display: 'flex', gap: '30px', alignItems: 'center', padding: '10px 0' },
+  
+  // Left: Diagrammatic Figure
+  funnelDiagram: { display: 'flex', flexDirection: 'column', alignItems: 'center', width: '130px', color: 'white', fontSize: '0.65rem', fontWeight: '700' },
+  stage1Shape: { width: '130px', height: '45px', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' },
+  
+  // These slopes create the funnel effect using border trick
+  stage2Slope: { width: '0', height: '0', borderLeft: '15px solid transparent', borderRight: '15px solid transparent', borderTop: '20px solid #3b82f6' },
+  stage2Shape: { width: '100px', height: '45px', backgroundColor: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  
+  stage3Slope: { width: '0', height: '0', borderLeft: '15px solid transparent', borderRight: '15px solid transparent', borderTop: '20px solid #f59e0b' },
+  stage3Shape: { width: '70px', height: '45px', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', textAlign: 'center' },
+
+  // Right: Callouts
+  funnelDetails: { flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' },
+  funnelDetailRow: { borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' },
+  detailLabel: { fontSize: '0.7rem', color: '#64748b', fontWeight: '600', marginBottom: '3px' },
+  detailValueContainer: { display: 'flex', alignItems: 'baseline', gap: '5px' },
+  detailValueMain: { fontSize: '1.2rem', fontWeight: '800', color: '#3b82f6' },
+  detailPercentage: { fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' },
+  
+  // Dropout/Dropout row
+  dropoutRow: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#475569', backgroundColor: '#fff1f2', padding: '10px', borderRadius: '8px', marginTop: '5px', fontWeight: '500' },
+  
+  // Distinct Success Rate callout at bottom right
+  successRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', padding: '12px', border: '2px solid #10b981', borderRadius: '10px', backgroundColor: '#ecfdf5', fontSize: '0.85rem', fontWeight: '700', color: '#15803d' }
 };
 
 export default AdminHome;
