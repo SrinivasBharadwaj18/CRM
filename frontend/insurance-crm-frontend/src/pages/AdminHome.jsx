@@ -186,29 +186,63 @@ const AttendanceTrend = ({ trend, activeAgents }) => {
 };
 
 // --- STYLES ---
+// Replace the styles object in your AdminHome.js with this:
+
 const styles = {
   page: { 
     display: 'flex', 
-    backgroundColor: '#f8fafc', // Slightly lighter grey for better contrast with sidebar
+    backgroundColor: '#f8fafc', 
     minHeight: '100vh', 
     fontFamily: "'Inter', sans-serif",
     width: '100%',
+    margin: 0,
+    padding: 0,
   },
   mainContent: { 
     flex: 1, 
-    marginLeft: '260px',        // Fixed: matches the new Sidebar width exactly
-    padding: '40px 30px',       // Balanced top padding
+    /* This MUST match your Navbar width exactly (260px). 
+       If it still looks too far, you can try 250px or 240px 
+       depending on your exact browser rendering.
+    */
+    marginLeft: '260px',        
+    padding: '30px',            // Standardized padding for all sides
     width: 'calc(100% - 260px)', 
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    display: 'block'
   },
   loading: { textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', color: '#64748b' },
-  tileRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '25px' },
-  tile: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
+  tileRow: { 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(4, 1fr)', 
+    gap: '20px', 
+    marginBottom: '25px' 
+  },
+  tile: { 
+    backgroundColor: 'white', 
+    padding: '20px', 
+    borderRadius: '12px', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '15px', 
+    border: '1px solid #e2e8f0', 
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)' 
+  },
   tileIcon: { width: '48px', height: '48px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' },
   tileLabel: { fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' },
   tileValue: { fontSize: '1.4rem', fontWeight: '800', color: '#1e293b' },
-  dashboardGrid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px' },
-  card: { backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' },
+  dashboardGrid: { 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(12, 1fr)', 
+    gap: '20px' 
+  },
+  card: { 
+    backgroundColor: 'white', 
+    borderRadius: '12px', 
+    padding: '20px', 
+    marginBottom: '20px', 
+    border: '1px solid #e2e8f0', 
+    boxShadow: '0 1px 2px rgba(0,0,0,0.03)' 
+  },
   cardTitle: { fontSize: '0.8rem', fontWeight: '800', color: '#475569', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' },
   listLine: { display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: '0.8rem', borderBottom: '1px solid #f8fafc' },
   dirRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
