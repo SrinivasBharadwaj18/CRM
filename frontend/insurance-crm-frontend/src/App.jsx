@@ -14,7 +14,6 @@ function App() {
   const location = useLocation();
   const isAgent = user?.role === 'agent';
 
-  // --- THE FIX: Define all paths that should be "Fullscreen" (No Sidebar) ---
   const publicPaths = ["/", "/login"];
   const isPublicPage = publicPaths.includes(location.pathname);
 
@@ -33,13 +32,12 @@ function App() {
     }
   };
 
-  // We only show the UI shell if the user is logged in AND we aren't on a public page
   const showSidebar = user && !isPublicPage;
 
   return (
     <div className="app-layout" style={styles.layout}>
       
-      {/* Sidebar logic */}
+      {/* Sidebar rendered here ONLY */}
       {showSidebar && (
         <Navbar isOnBreak={isOnBreak} setIsOnBreak={setIsOnBreak} />
       )}
@@ -51,8 +49,8 @@ function App() {
 
       <div className="main-content" style={{
         ...styles.mainContent,
-        // The content only gets a margin if the sidebar is actually rendered
-        marginLeft: showSidebar ? '260px' : '0'
+        marginLeft: showSidebar ? '260px' : '0',
+        width: showSidebar ? 'calc(100% - 260px)' : '100%'
       }}>
         <AppRoutes />
       </div>
@@ -65,14 +63,18 @@ const styles = {
     display: 'flex', 
     minHeight: '100vh', 
     width: '100%', 
-    backgroundColor: '#f1f5f9' 
+    backgroundColor: '#f8fafc',
+    margin: 0,
+    padding: 0
   },
   mainContent: { 
     flex: 1, 
     position: 'relative', 
     display: 'flex', 
     flexDirection: 'column',
-    width: '100%'
+    minWidth: 0,
+    boxSizing: 'border-box',
+    transition: 'margin-left 0.3s ease'
   }
 };
 

@@ -77,18 +77,19 @@ const SidebarItem = ({ to, icon, label, active }) => {
 };
 
 const styles = {
-  sidebar: { 
-    width: "260px", 
-    backgroundColor: "#e8eff9", // Light blue/grey background like the photo
+sidebar: { 
+    width: "260px",        // The master width
+    backgroundColor: "#e8eff9", 
     height: "100vh", 
-    position: "fixed", 
+    position: "fixed",     // Stays locked to the left
     left: 0, 
     top: 0, 
+    margin: 0,             // Ensure no outside spacing
     display: "flex", 
     flexDirection: "column", 
     zIndex: 1000, 
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    borderRight: "1px solid #bfc9d8"
+    borderRight: "1px solid #bfc9d8",
+    boxSizing: 'border-box'
   },
   navMenu: { flex: 1, display: "flex", flexDirection: "column" },
   navItem: { 

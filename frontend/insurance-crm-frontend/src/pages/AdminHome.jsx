@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import Navbar from "../components/Navbar";
 
 function AdminHome() {
   const [data, setData] = useState(null);
@@ -22,113 +21,108 @@ function AdminHome() {
   if (!data) return <div style={styles.loading}>Initializing Admin Suite...</div>;
 
   return (
-    <div style={styles.page}>
-      <Navbar />
-      
-      <main style={styles.mainContent}>
-        {/* TOP TILES */}
-        <div style={styles.tileRow}>
-          <Tile label="Active Agents" value={data.tiles.active_agents} icon="🎧" color="#3b82f6" />
-          <Tile label="Total Leads" value={data.tiles.total_leads} icon="📈" color="#0ea5e9" />
-          <Tile label="Conversion Rate" value={data.tiles.conversion_rate} icon="🎯" color="#10b981" />
-          <Tile label="Total Employees" value={data.tiles.total_employees} icon="👥" color="#6366f1" />
+    <div style={styles.container}>
+      {/* TOP TILES */}
+      <div style={styles.tileRow}>
+        <Tile label="Active Agents" value={data.tiles.active_agents} icon="🎧" color="#3b82f6" />
+        <Tile label="Total Leads" value={data.tiles.total_leads} icon="📈" color="#0ea5e9" />
+        <Tile label="Conversion Rate" value={data.tiles.conversion_rate} icon="🎯" color="#10b981" />
+        <Tile label="Total Employees" value={data.tiles.total_employees} icon="👥" color="#6366f1" />
+      </div>
+
+      <div style={styles.dashboardGrid}>
+        
+        {/* Column 1: Expiries & Funnel */}
+        <div style={{ gridColumn: "span 4" }}>
+          <Card title="🚨 Urgent Expiries (7 Days)">
+              {data.expiries.length > 0 ? data.expiries.map((exp, i) => (
+                  <div key={i} style={styles.expiryRow}>
+                      <div>
+                          <div style={styles.hireName}>{exp.customer}</div>
+                          <div style={styles.hireRole}>Agent: {exp.agent}</div>
+                      </div>
+                      <div style={styles.expiryDateTag}>{exp.expiry}</div>
+                  </div>
+              )) : <div style={styles.emptyState}>No policies expiring soon.</div>}
+          </Card>
+
+          <Card title="📊 Conversion Funnel">
+              <div style={styles.listLine}><span>New Leads</span> <strong style={{color: '#3b82f6'}}>{data.funnel.new}</strong></div>
+              <div style={styles.listLine}><span>In Discussion</span> <strong style={{color: '#f59e0b'}}>{data.funnel.follow_up}</strong></div>
+              <div style={styles.listLine}><span>Converted</span> <strong style={{color: '#10b981'}}>{data.funnel.converted}</strong></div>
+              <div style={styles.listLine}><span>Not Interested</span> <strong style={{color: '#ef4444'}}>{data.funnel.lost}</strong></div>
+              <div style={{...styles.listLine, border: 'none', marginTop: '10px'}}>
+                  <span>Success Rate</span> <strong>{data.funnel.rate}</strong>
+              </div>
+          </Card>
+
+          <Card title="🏆 Agent Leaderboard">
+              {data.leaderboard.map((agent, i) => (
+                  <div key={i} style={styles.dirRow}>
+                      <div style={styles.avatarSmall}>{i + 1}</div>
+                      <div style={{flex: 1}}>
+                          <div style={{fontWeight: '700', fontSize: '0.85rem'}}>{agent.name}</div>
+                          <div style={{fontSize: '0.7rem', color: '#64748b'}}>{agent.sales} Sales</div>
+                      </div>
+                      <span style={{fontWeight: '800', fontSize: '0.8rem', color: '#10b981'}}>
+                          ₹{agent.revenue.toLocaleString()}
+                      </span>
+                  </div>
+              ))}
+          </Card>
         </div>
 
-        <div style={styles.dashboardGrid}>
-          
-          {/* Column 1: Expiries & Funnel */}
-          <div style={{ gridColumn: "span 4" }}>
-            <Card title="🚨 Urgent Expiries (7 Days)">
-                {data.expiries.length > 0 ? data.expiries.map((exp, i) => (
-                    <div key={i} style={styles.expiryRow}>
-                        <div>
-                            <div style={styles.hireName}>{exp.customer}</div>
-                            <div style={styles.hireRole}>Agent: {exp.agent}</div>
-                        </div>
-                        <div style={styles.expiryDateTag}>{exp.expiry}</div>
-                    </div>
-                )) : <div style={styles.emptyState}>No policies expiring soon.</div>}
-            </Card>
+        {/* Column 2: Attendance Overview & Trend */}
+        <div style={{ gridColumn: "span 5" }}>
+          <Card title="Attendance Overview (Today)">
+             <div style={styles.chartRow}>
+                <Donut value={data.attendance.present} label="Present" color="#10b981" />
+                <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
+                <Donut value={data.attendance.late} label="Late" color="#f59e0b" />
+             </div>
+          </Card>
 
-            <Card title="📊 Conversion Funnel">
-                <div style={styles.listLine}><span>New Leads</span> <strong style={{color: '#3b82f6'}}>{data.funnel.new}</strong></div>
-                <div style={styles.listLine}><span>In Discussion</span> <strong style={{color: '#f59e0b'}}>{data.funnel.follow_up}</strong></div>
-                <div style={styles.listLine}><span>Converted</span> <strong style={{color: '#10b981'}}>{data.funnel.converted}</strong></div>
-                <div style={styles.listLine}><span>Not Interested</span> <strong style={{color: '#ef4444'}}>{data.funnel.lost}</strong></div>
-                <div style={{...styles.listLine, border: 'none', marginTop: '10px'}}>
-                    <span>Success Rate</span> <strong>{data.funnel.rate}</strong>
-                </div>
-            </Card>
+          <Card title="Attendance Trend (Last 7 Days)">
+              <AttendanceTrend trend={data.trend} activeAgents={data.tiles.active_agents} />
+          </Card>
 
-            <Card title="🏆 Agent Leaderboard">
-                {data.leaderboard.map((agent, i) => (
-                    <div key={i} style={styles.dirRow}>
-                        <div style={styles.avatarSmall}>{i + 1}</div>
-                        <div style={{flex: 1}}>
-                            <div style={{fontWeight: '700', fontSize: '0.85rem'}}>{agent.name}</div>
-                            <div style={{fontSize: '0.7rem', color: '#64748b'}}>{agent.sales} Sales</div>
-                        </div>
-                        <span style={{fontWeight: '800', fontSize: '0.8rem', color: '#10b981'}}>
-                            ₹{agent.revenue.toLocaleString()}
-                        </span>
-                    </div>
-                ))}
-            </Card>
+          <div style={styles.twoCol}>
+              <Card title="Total Revenue">
+                  <div style={{fontSize: '0.7rem', color: '#64748b'}}>Pipeline Total</div>
+                  <h2 style={{color: '#1e293b', margin: '5px 0'}}>₹{data.revenue.total.toLocaleString()}</h2>
+                  <div style={{fontSize: '0.65rem', color: '#10b981', fontWeight: '700'}}>Growth: +12%</div>
+              </Card>
+              <Card title="Payout Status">
+                  <div style={styles.leaveItem}><span>Collected</span> <span style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</span></div>
+                  <div style={styles.leaveItem}><span>Pending</span> <span style={{color: '#f59e0b'}}>₹{data.revenue.pending.toLocaleString()}</span></div>
+              </Card>
           </div>
-
-          {/* Column 2: Attendance Snapshot */}
-          <div style={{ gridColumn: "span 5" }}>
-            <Card title="Attendance Overview (Today)">
-               <div style={styles.chartRow}>
-                  <Donut value={data.attendance.present} label="Present" color="#10b981" />
-                  <Donut value={data.attendance.absent} label="Absent" color="#ef4444" />
-                  <Donut value={data.attendance.late} label="Late" color="#f59e0b" />
-               </div>
-            </Card>
-
-            <Card title="Attendance Trend (Last 7 Days)">
-                <AttendanceTrend trend={data.trend} activeAgents={data.tiles.active_agents} />
-            </Card>
-
-            <div style={styles.twoCol}>
-                <Card title="Total Revenue">
-                    <div style={{fontSize: '0.7rem', color: '#64748b'}}>Pipeline Total</div>
-                    <h2 style={{color: '#1e293b', margin: '5px 0'}}>₹{data.revenue.total.toLocaleString()}</h2>
-                    <div style={{fontSize: '0.65rem', color: '#10b981', fontWeight: '700'}}>Growth: +12%</div>
-                </Card>
-                <Card title="Payout Status">
-                    <div style={styles.leaveItem}><span>Collected</span> <span style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</span></div>
-                    <div style={styles.leaveItem}><span>Pending</span> <span style={{color: '#f59e0b'}}>₹{data.revenue.pending.toLocaleString()}</span></div>
-                </Card>
-            </div>
-          </div>
-
-          {/* Column 3: Revenue Pipeline */}
-          <div style={{ gridColumn: "span 3" }}>
-             <Card title="💰 Revenue Pipeline">
-                <div style={{marginBottom: '20px'}}>
-                    <div style={styles.progressLabel}><span>Collection Progress</span> <span>{Math.round((data.revenue.paid / data.revenue.total) * 100) || 0}%</span></div>
-                    <div style={styles.progressBarBg}>
-                        <div style={{...styles.progressBarFill, width: `${(data.revenue.paid / data.revenue.total) * 100}%`}}></div>
-                    </div>
-                </div>
-                <div style={styles.listLine}><span>Actual Banked</span> <strong style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</strong></div>
-                <div style={styles.listLine}><span>Uncollected</span> <strong style={{color: '#ef4444'}}>₹{data.revenue.pending.toLocaleString()}</strong></div>
-             </Card>
-
-             <Card title="Top Revenue Generator">
-                <div style={{textAlign: 'center', padding: '10px 0'}}>
-                    <div style={styles.avatarLarge}>{data.leaderboard[0]?.name[0]}</div>
-                    <div style={{fontWeight: '800', marginTop: '10px', color: '#1e293b'}}>{data.leaderboard[0]?.name}</div>
-                    <div style={{fontSize: '0.8rem', color: '#3b82f6', fontWeight: '700'}}>
-                        Top Sales: ₹{data.leaderboard[0]?.revenue.toLocaleString()}
-                    </div>
-                </div>
-             </Card>
-          </div>
-
         </div>
-      </main>
+
+        {/* Column 3: Revenue Pipeline */}
+        <div style={{ gridColumn: "span 3" }}>
+           <Card title="💰 Revenue Pipeline">
+              <div style={{marginBottom: '20px'}}>
+                  <div style={styles.progressLabel}><span>Collection Progress</span> <span>{Math.round((data.revenue.paid / data.revenue.total) * 100) || 0}%</span></div>
+                  <div style={styles.progressBarBg}>
+                      <div style={{...styles.progressBarFill, width: `${(data.revenue.paid / data.revenue.total) * 100}%`}}></div>
+                  </div>
+              </div>
+              <div style={styles.listLine}><span>Actual Banked</span> <strong style={{color: '#10b981'}}>₹{data.revenue.paid.toLocaleString()}</strong></div>
+              <div style={styles.listLine}><span>Uncollected</span> <strong style={{color: '#ef4444'}}>₹{data.revenue.pending.toLocaleString()}</strong></div>
+           </Card>
+
+           <Card title="Top Revenue Generator">
+              <div style={{textAlign: 'center', padding: '10px 0'}}>
+                  <div style={styles.avatarLarge}>{data.leaderboard[0]?.name[0]}</div>
+                  <div style={{fontWeight: '800', marginTop: '10px', color: '#1e293b'}}>{data.leaderboard[0]?.name}</div>
+                  <div style={{fontSize: '0.8rem', color: '#35579b', fontWeight: '700'}}>
+                      Top Sales: ₹{data.leaderboard[0]?.revenue.toLocaleString()}
+                  </div>
+              </div>
+           </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -184,20 +178,10 @@ const AttendanceTrend = ({ trend, activeAgents }) => {
     );
 };
 
-// --- STYLES ---
 const styles = {
-  page: { 
-    display: 'flex', 
-    backgroundColor: '#f8fafc', 
-    minHeight: '100vh', 
-    fontFamily: "'Inter', sans-serif",
+  container: {
+    padding: '30px', 
     width: '100%',
-  },
-  mainContent: { 
-    flex: 1, 
-    marginLeft: '240px',        // Matches Navbar 240px width exactly with 0 gap
-    padding: '30px 30px',       
-    width: 'calc(100% - 240px)', 
     boxSizing: 'border-box'
   },
   loading: { textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', color: '#64748b' },
