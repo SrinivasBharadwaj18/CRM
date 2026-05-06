@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom'; // 1. Import useLocation
 import AppRoutes from "./routes/AppRoutes";
 import Navbar from "./components/Navbar";
 import BreakGuard from "./components/BreakGuard";
@@ -9,8 +10,12 @@ import './App.css';
 function App() {
   const { user } = useSelector((state) => state.auth || {});
   const [isOnBreak, setIsOnBreak] = useState(false);
-
+  
+  const location = useLocation(); // 2. Initialize location
   const isAgent = user?.role === 'agent';
+
+  // 3. Define which paths should NOT have a sidebar (like the Login page)
+  const isLoginPage = location.pathname === "/";
 
   useEffect(() => {
     if (isAgent) {
@@ -29,15 +34,21 @@ function App() {
 
   return (
     <div className="app-layout" style={styles.layout}>
-      {/* Navbar sits here globally */}
-      {user && <Navbar isOnBreak={isOnBreak} setIsOnBreak={setIsOnBreak} />}
+      
+      {/* 4. Only show Navbar if user is logged in AND we aren't on the login page */}
+      {user && !isLoginPage && (
+        <Navbar isOnBreak={isOnBreak} setIsOnBreak={setIsOnBreak} />
+      )}
 
-      {/* BreakGuard sits here globally */}
-      {isAgent && <BreakGuard isOnBreak={isOnBreak} setIsOnBreak={setIsOnBreak} />}
+      {/* 5. Only run BreakGuard if logged in and not on login page */}
+      {isAgent && !isLoginPage && (
+        <BreakGuard isOnBreak={isOnBreak} setIsOnBreak={setIsOnBreak} />
+      )}
 
       <div className="main-content" style={{
         ...styles.mainContent,
-        marginLeft: user ? '260px' : '0'
+        // 6. Only add the 260px margin if the Sidebar is actually visible
+        marginLeft: (user && !isLoginPage) ? '260px' : '0'
       }}>
         <AppRoutes />
       </div>
