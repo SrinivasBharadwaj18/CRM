@@ -468,13 +468,17 @@ def distribute_leads_to_new_agent(sender, instance, created, **kwargs):
 
 
 
+from django.db import models
+from django.utils import timezone
+
 class Task(models.Model):
-    # Link to Lead object for data integrity
     lead = models.ForeignKey('Lead', on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     agent = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name='tasks')
     
     title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True) # Renamed from 'note' for clarity
     due_date = models.DateField()
+    due_time = models.TimeField(null=True, blank=True) # ADDED: for precise notifications
     is_completed = models.BooleanField(default=False)
     
     PRIORITY_CHOICES = [
@@ -482,10 +486,8 @@ class Task(models.Model):
         ('medium', 'Medium'),
         ('low', 'Low'),
     ]
-    # Set a default to prevent crashes during task creation
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     
-    note = models.TextField(blank=True, null=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -494,8 +496,17 @@ class Task(models.Model):
 
     @property
     def overdue(self):
-        from django.utils import timezone
-        return (not self.is_completed) and (self.due_date < timezone.now().date())
+        now = timezone.now()
+        if self.is_completed:
+            return False
+        
+        # Combine date and time for accurate comparison
+        if self.due_time:
+            task_datetime = timezone.make_aware(
+                timezone.datetime.combine(self.due_date, self.due_time)
+            )
+            return task_datetime < now
+        return self.due_date < now.date()
 
 
 

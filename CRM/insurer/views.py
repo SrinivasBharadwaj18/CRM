@@ -926,30 +926,32 @@ def agent_task_counts(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_agent_task(request):
-    # Validation
-    title = request.data.get('title')
-    due_date = request.data.get('due_date')
-    priority = request.data.get('priority')
-    lead_id = request.data.get('lead_id', None) # Optional link
+    data = request.data
+    title = data.get('title')
+    due_date = data.get('due_date')
+    due_time = data.get('due_time') # New
+    description = data.get('description') # New
+    priority = data.get('priority', 'medium')
+    lead_id = data.get('lead_id')
 
-    if not all([title, due_date, priority]):
-        return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+    if not all([title, due_date]):
+        return Response({"error": "Title and Due Date are required"}, status=400)
 
     try:
-        # Secure record creation
         task = Task.objects.create(
-            agent=request.user, # Security: Automatic assignment
+            agent=request.user,
             title=title,
+            description=description,
             due_date=due_date,
+            due_time=due_time if due_time else None,
             priority=priority,
-            # Link lead if provided
-            lead_id=lead_id if lead_id else None
+            lead_id=lead_id
         )
         
         return Response({
             "message": "Task created successfully",
-            "task_id": task.id
-        }, status=status.HTTP_201_CREATED)
+            "id": task.id
+        }, status=201)
         
     except Exception as e:
         return Response({"error": str(e)}, status=500)
