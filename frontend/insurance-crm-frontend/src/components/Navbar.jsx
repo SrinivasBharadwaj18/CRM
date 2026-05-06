@@ -17,7 +17,10 @@ import {
   CheckSquare, 
   Wallet, 
   Coffee, 
-  Clock
+  Clock,
+  UserPlus,
+  UploadCloud,
+  Landmark 
 } from "lucide-react";
 
 function Navbar({ isOnBreak, setIsOnBreak }) {
