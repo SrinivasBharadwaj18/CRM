@@ -4,9 +4,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import api from "../services/api";
 import { 
-  LayoutGrid, Users, Briefcase, CalendarDays, 
-  CreditCard, BarChart3, Settings, LogOut,
-  PhoneCall, CheckSquare, Wallet, Coffee, Clock
+  LayoutGrid, 
+  LayoutDashboard, // Add this here
+  Users, 
+  Briefcase, 
+  CalendarDays, 
+  CreditCard, 
+  BarChart3, 
+  Settings, 
+  LogOut,
+  PhoneCall, 
+  CheckSquare, 
+  Wallet, 
+  Coffee, 
+  Clock
 } from "lucide-react";
 
 function Navbar({ isOnBreak, setIsOnBreak }) {
