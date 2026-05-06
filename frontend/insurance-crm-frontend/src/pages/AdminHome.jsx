@@ -23,23 +23,9 @@ function AdminHome() {
 
   return (
     <div style={styles.page}>
+      {/* New Professional Sidebar */}
       <Navbar />
       
-      {/* SIDEBAR */}
-      <div style={styles.sidebar}>
-         <div style={styles.sidebarHeader}>CRM PRO</div>
-         {['Dashboard', 'Employee Management', 'Leads Analytics', 'Attendance', 'Revenue', 'Settings'].map(item => (
-             <div key={item} style={{
-                 ...styles.sidebarItem, 
-                 backgroundColor: item === 'Dashboard' ? '#334155' : 'transparent',
-                 borderLeft: item === 'Dashboard' ? '4px solid #3b82f6' : '4px solid transparent'
-             }}>
-                 {item}
-             </div>
-         ))}
-      </div>
-
-      {/* MAIN CONTENT AREA */}
       <main style={styles.mainContent}>
         {/* TOP TILES */}
         <div style={styles.tileRow}>
@@ -199,51 +185,35 @@ const AttendanceTrend = ({ trend, activeAgents }) => {
     );
 };
 
-// --- UPDATED STYLES ---
+// --- STYLES ---
 const styles = {
   page: { 
     display: 'flex', 
-    backgroundColor: '#f1f5f9', 
+    backgroundColor: '#f8fafc', // Slightly lighter grey for better contrast with sidebar
     minHeight: '100vh', 
     fontFamily: "'Inter', sans-serif",
     width: '100%',
-    overflowX: 'hidden'
   },
-  sidebar: { 
-    width: '240px', 
-    backgroundColor: '#1e293b', 
-    color: 'white', 
-    paddingTop: '90px', 
-    position: 'fixed', 
-    height: '100vh', 
-    zIndex: 10,
-    top: 0,
-    left: 0
-  },
-  sidebarHeader: { padding: '20px 25px', fontSize: '1.2rem', fontWeight: '900', color: '#3b82f6', letterSpacing: '1px' },
-  sidebarItem: { padding: '15px 25px', fontSize: '0.85rem', cursor: 'pointer', color: '#94a3b8', fontWeight: '600' },
-  
   mainContent: { 
     flex: 1, 
-    marginLeft: '240px',        // Pushes content past the sidebar
-    padding: '120px 30px 40px', // Pushes content below the Navbar
-    width: 'calc(100% - 240px)', // Ensures content doesn't exceed screen width
-    boxSizing: 'border-box'     // Prevents padding from causing horizontal scroll
+    marginLeft: '260px',        // Fixed: matches the new Sidebar width exactly
+    padding: '40px 30px',       // Balanced top padding
+    width: 'calc(100% - 260px)', 
+    boxSizing: 'border-box'
   },
-  
   loading: { textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', color: '#64748b' },
   tileRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '25px' },
-  tile: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #e2e8f0' },
+  tile: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
   tileIcon: { width: '48px', height: '48px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' },
   tileLabel: { fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' },
   tileValue: { fontSize: '1.4rem', fontWeight: '800', color: '#1e293b' },
   dashboardGrid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px' },
-  card: { backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px', border: '1px solid #e2e8f0' },
+  card: { backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' },
   cardTitle: { fontSize: '0.8rem', fontWeight: '800', color: '#475569', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' },
   listLine: { display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: '0.8rem', borderBottom: '1px solid #f8fafc' },
   dirRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid #f8fafc' },
   avatarSmall: { width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.7rem', color: '#64748b' },
-  avatarLarge: { width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', margin: '0 auto' },
+  avatarLarge: { width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#35579b', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', margin: '0 auto' },
   chartRow: { display: 'flex', justifyContent: 'space-around', padding: '10px 0' },
   donut: { width: '55px', height: '55px', borderRadius: '50%', border: '5px solid', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' },
