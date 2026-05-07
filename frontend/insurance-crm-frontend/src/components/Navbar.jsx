@@ -32,22 +32,26 @@ function Navbar({ isOnBreak, setIsOnBreak }) {
   const dropdownRef = useRef(null);
 
   // 1. Polling Logic for Notifications
-  useEffect(() => {
-    if (!user) return;
+// Example logic for your React App
+useEffect(() => {
+  if (!user) return;
 
-    const fetchNotifications = async () => {
-      try {
-        const res = await api.get('/agent/notifications/check/');
-        setNotifications(res.data);
-      } catch (err) {
-        console.error("Failed to fetch notifications", err);
-      }
-    };
+  const fetchNotifications = async () => {
+    try {
+      // 1. Use 'api' instead of 'axios' to keep your auth headers
+      // 2. Remove /api/ if your baseURL already includes it
+      const res = await api.get('/agent/notifications/check/'); 
+      setNotifications(res.data);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
 
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [user]);
+  fetchNotifications(); 
+  const interval = setInterval(fetchNotifications, 60000); // 1 minute interval
+
+  return () => clearInterval(interval);
+}, [user]); // Added user to dependency array
 
   // 2. Close dropdown when clicking outside
   useEffect(() => {

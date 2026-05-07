@@ -1050,42 +1050,51 @@ def check_active_break(request):
     return Response({"active": False})
 
 
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def check_notifications(request):
     try:
         now = timezone.now()
+        current_date = now.date()
+        current_time = now.time()
+        
         notifications = []
 
-        # Overdue Tasks
+        # Precise logic: Task is due if (Date is in the past) OR (Date is today AND time has passed)
         due_tasks = Task.objects.filter(
             agent=request.user,
-            due_date__lte=now,
             is_completed=False
+        ).filter(
+            Q(due_date__lt=current_date) | 
+            Q(due_date=current_date, due_time__lte=current_time)
         )
+
         for t in due_tasks:
             notifications.append({
                 "id": f"task_{t.id}",
                 "title": "📌 Task Due",
-                "message": t.title # Use 'title' or 'description'
+                "message": t.title,
+                "type": "task"
             })
 
-        # Overdue Follow-ups
-        # Make sure your FollowUp model has follow_up_date and connects to the agent
+        # Overdue Follow-ups (using the same logic if follow_up has a time)
         due_followups = FollowUp.objects.filter(
             lead__assigned_to=request.user,
-            follow_up_date__lte=now,
+            follow_up_date__lte=current_date,
             lead__status='follow_up'
         )
+        
         for f in due_followups:
             notifications.append({
                 "id": f"follow_{f.id}",
                 "title": "📞 Follow-up Needed",
-                "message": f"Contact {f.lead.name}"
+                "message": f"Contact {f.lead.name}",
+                "type": "followup"
             })
 
         return Response(notifications)
     except Exception as e:
-        # This will help you see the error in your Docker logs
         print(f"Notification Error: {e}")
         return Response({"error": str(e)}, status=500)
