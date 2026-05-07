@@ -819,13 +819,13 @@ def get_agent_tasks(request):
         tasks = tasks.filter(title__icontains=search)
     
     if status_filter == 'pending':
-        tasks = tasks.filter(status='pending', due_date__gte=timezone.now().date())
+        tasks = tasks.filter(is_completed=False, due_date__gte=timezone.now().date())
     elif status_filter == 'completed':
-        tasks = tasks.filter(status='completed')
+        tasks = tasks.filter(is_completed=True)
     elif status_filter == 'overdue':
-        tasks = tasks.filter(status='pending', due_date__lt=timezone.now().date())
+        tasks = tasks.filter(is_completed=False, due_date__lt=timezone.now().date())
 
-    return Response(tasks.values('id', 'title', 'due_date', 'lead_name', 'priority', 'status'))
+    return Response(tasks.values('id', 'title', 'due_date', 'priority', 'is_completed'))
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -837,10 +837,10 @@ def get_task_summary(request):
     
     return Response({
         "all": base_qs.count(),
-        "pending": base_qs.filter(status='pending', due_date__gte=today).count(),
-        "completed": base_qs.filter(status='completed').count(),
-        "overdue": base_qs.filter(status='pending', due_date__lt=today).count(),
-        "high_priority": base_qs.filter(priority='high', status='pending').count(),
+        "pending": base_qs.filter(is_completed=False, due_date__gte=today).count(),
+        "completed": base_qs.filter(is_completed=True).count(),
+        "overdue": base_qs.filter(is_completed=False, due_date__lt=today).count(),
+        "high_priority": base_qs.filter(priority='high', is_completed=False).count(),
     })
 
 
@@ -1061,7 +1061,7 @@ def check_notifications(request):
         due_tasks = Task.objects.filter(
             agent=request.user,
             due_date__lte=now,
-            status='pending'
+            is_completed=False
         )
         for t in due_tasks:
             notifications.append({
