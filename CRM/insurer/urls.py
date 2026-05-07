@@ -31,6 +31,7 @@ from .views import (
     toggle_break,
     get_all_breaks,
     check_active_break,
+    check_notifications,
     AgentEarningsDashboardView
 )
 from django.urls import path, re_path, include
@@ -71,6 +72,7 @@ urlpatterns = [
     path('agent/toggle-break/',toggle_break, name='toggle-break'),
     path('agent/breaks/',get_all_breaks, name='get-all-breaks'),    
     path('agent/breaks/active/',check_active_break, name='check-active-break'),
+    path('agent/notifications/check/',check_notifications, name='check-notifications'),
 
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 ]

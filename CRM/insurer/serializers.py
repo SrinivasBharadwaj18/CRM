@@ -92,20 +92,11 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = [
-            'id', 
-            'title', 
-            'lead',       # The ID (for editing/links)
-            'lead_name',  # The Name (for display in the table)
-            'agent', 
-            'agent_name',
-            'due_date', 
-            'priority', 
-            'is_completed', 
-            'overdue',    # Useful for the 'Overdue' tab logic
-            'note', 
-            'created_at'
-        ]
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        # Change 'note' to 'description' here!
+        fields = ['id', 'agent', 'title', 'description', 'status', 'priority', 'due_date', 'created_at']
         
         # 'agent' should be read_only if you are auto-assigning 
         # it to the logged-in user in the view.

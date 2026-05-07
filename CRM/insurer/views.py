@@ -1053,38 +1053,39 @@ def check_active_break(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def check_notifications(request):
-    now = timezone.now()
-    agent = request.user
-    notifications = []
+    try:
+        now = timezone.now()
+        notifications = []
 
-    # 1. Fetch Overdue Tasks
-    due_tasks = Task.objects.filter(
-        agent=agent,
-        due_date__lte=now,
-        status='pending'
-    )
-    for t in due_tasks:
-        notifications.append({
-            "id": f"task_{t.id}",
-            "type": "TASK",
-            "title": "📌 Task Due",
-            "message": t.title
-        })
+        # Overdue Tasks
+        due_tasks = Task.objects.filter(
+            agent=request.user,
+            due_date__lte=now,
+            status='pending'
+        )
+        for t in due_tasks:
+            notifications.append({
+                "id": f"task_{t.id}",
+                "title": "📌 Task Due",
+                "message": t.title # Use 'title' or 'description'
+            })
 
-    # 2. Fetch Lead Follow-up Deadlines
-    # Assuming your FollowUp model has 'follow_up_date' and 'lead'
-    due_followups = FollowUp.objects.filter(
-        lead__assigned_to=agent, # Adjust based on your Lead/Employee relationship
-        follow_up_date__lte=now,
-        lead__status='follow_up' # Only notify if still in follow-up status
-    ).select_related('lead')
+        # Overdue Follow-ups
+        # Make sure your FollowUp model has follow_up_date and connects to the agent
+        due_followups = FollowUp.objects.filter(
+            lead__assigned_to=request.user,
+            follow_up_date__lte=now,
+            lead__status='follow_up'
+        )
+        for f in due_followups:
+            notifications.append({
+                "id": f"follow_{f.id}",
+                "title": "📞 Follow-up Needed",
+                "message": f"Contact {f.lead.name}"
+            })
 
-    for f in due_followups:
-        notifications.append({
-            "id": f"follow_{f.id}",
-            "type": "FOLLOW_UP",
-            "title": "📞 Follow-up Needed",
-            "message": f"Call {f.lead.name} now!"
-        })
-
-    return Response(notifications)
+        return Response(notifications)
+    except Exception as e:
+        # This will help you see the error in your Docker logs
+        print(f"Notification Error: {e}")
+        return Response({"error": str(e)}, status=500)
