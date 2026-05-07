@@ -96,7 +96,7 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         # Change 'note' to 'description' here!
-        fields = ['id', 'agent', 'title', 'description', 'status', 'priority', 'due_date', 'created_at']
+        fields = ['id', 'agent', 'title', 'description', 'is_completed', 'priority', 'due_date', 'created_at']
         
         # 'agent' should be read_only if you are auto-assigning 
         # it to the logged-in user in the view.
