@@ -292,21 +292,17 @@
 
 import React from 'react';
 import { 
-  LayoutDashboard, Users, PhoneCall, History, ClipboardList, 
-  Briefcase, FileText, CheckCircle, RefreshCcw, MessageSquare, 
-  UserCircle, Calendar, GraduationCap, LifeBuoy, ChevronLeft,
-  Phone, Mail, MapPin, Edit2, Plus, Info, Search, Bell, ExternalLink, MoreVertical
+  CheckCircle, ChevronLeft, Phone, Mail, MapPin, 
+  Edit2, Plus, Info, LifeBuoy, RefreshCcw, FileText, 
+  Briefcase, History, MessageSquare, Calendar
 } from 'lucide-react';
 
 const CurrentLead = () => {
-  // Brand Color Palette from image_01e24f.jpg
+  // Brand Colors from image_01e24f.jpg
   const colors = {
-    sidebarBg: '#0A1128', // Dark Navy
-    sidebarActive: '#1E293B',
-    mainBg: '#F1F5F9', // Light Gray/Blue background
+    mainBg: '#F8FAFC',
     primaryBlue: '#0052CC',
     success: '#22C55E',
-    warning: '#F59E0B',
     textMain: '#1E293B',
     textMuted: '#64748B',
     border: '#E2E8F0',
@@ -314,238 +310,149 @@ const CurrentLead = () => {
   };
 
   const s = {
-    container: { display: 'flex', height: '100vh', backgroundColor: colors.mainBg, fontFamily: 'Inter, system-ui, sans-serif', color: colors.textMain, overflow: 'hidden' },
-    sidebar: { width: '240px', backgroundColor: colors.sidebarBg, color: '#94A3B8', display: 'flex', flexDirection: 'column', shrink: 0 },
-    main: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' },
-    header: { height: '64px', backgroundColor: colors.white, borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'sticky', top: 0, zIndex: 10 },
+    wrapper: { padding: '24px', backgroundColor: colors.mainBg, minHeight: '100%', fontFamily: 'Inter, sans-serif' },
     card: { backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '20px', marginBottom: '20px' },
     sectionTitle: { fontSize: '14px', fontWeight: '700', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
     badge: { fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' },
-    input: { backgroundColor: '#F8FAFC', border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '10px 12px 10px 40px', fontSize: '13px', width: '400px', outline: 'none' }
+    btnAction: { padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FFF' }
   };
 
   return (
-    <div style={s.container}>
-      {/* SIDEBAR */}
-      <aside style={s.sidebar}>
-        <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: '#FFF', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ backgroundColor: colors.primaryBlue, padding: '6px', borderRadius: '6px' }}><LifeBuoy size={20}/></div>
-          <div style={{ lineHeight: '1.2' }}>
-            <div style={{ fontWeight: '800', fontSize: '14px', letterSpacing: '0.5px' }}>INSURANCE CRM</div>
-            <div style={{ fontSize: '10px', opacity: 0.6 }}>Agent Portal</div>
+    <div style={s.wrapper}>
+      {/* Header Actions */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: colors.primaryBlue, fontSize: '12px', fontWeight: '600', marginBottom: '4px', cursor: 'pointer' }}>
+            <ChevronLeft size={14}/> Back to Leads
           </div>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0 }}>Customer 360</h1>
+          <p style={{ fontSize: '12px', color: colors.textMuted }}>Complete view of customer and all interactions</p>
         </div>
-        <div style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
-          <SideItem icon={<LayoutDashboard size={18}/>} label="Dashboard" />
-          <SideItem icon={<Users size={18}/>} label="My Leads" />
-          <SideItem icon={<PhoneCall size={18}/>} label="Auto Dialer" />
-          <SideItem icon={<History size={18}/>} label="Call History" />
-          <SideItem icon={<ClipboardList size={18}/>} label="Followup Tasks" badge="12" />
-          <SideItem icon={<Briefcase size={18}/>} label="My Business" />
-          <SideItem icon={<FileText size={18}/>} label="Proposal Submission" />
-          <SideItem icon={<CheckCircle size={18}/>} label="Issued Policies" />
-          <SideItem icon={<RefreshCcw size={18}/>} label="Renewals" />
-          <SideItem icon={<MessageSquare size={18}/>} label="WhatsApp Chat" />
-          <SideItem icon={<UserCircle size={18}/>} label="Customer 360" active />
-          <SideItem icon={<Calendar size={18}/>} label="Attendance" />
-          <SideItem icon={<GraduationCap size={18}/>} label="Knowledge Base" />
-          <SideItem icon={<LifeBuoy size={18}/>} label="Support Tickets" badge="2" />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{ ...s.btnAction, border: '1px solid #16A34A', color: '#16A34A' }}><Phone size={14}/> Call</button>
+          <button style={{ ...s.btnAction, border: '1px solid #16A34A', color: '#16A34A' }}><MessageSquare size={14}/> WhatsApp</button>
+          <button style={{ ...s.btnAction, border: `1px solid ${colors.border}` }}>More Actions ▾</button>
         </div>
-        <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '12px', display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }}>
-          <span>Collapse Menu</span> <ChevronLeft size={16}/>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <div style={s.main}>
-        {/* TOP NAVBAR */}
-        <header style={s.header}>
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: '14px', top: '11px', color: colors.textMuted }} />
-            <input type="text" placeholder="Search by Lead ID, Name, Mobile, Policy No..." style={s.input} />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: `1px solid ${colors.border}`, padding: '8px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: '500' }}>
-              <Calendar size={16} color={colors.primaryBlue} /> 31 May 2024, Friday
-            </div>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-               <div style={{ position: 'relative' }}><Bell size={20}/><span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#EF4444', color: '#FFF', fontSize: '9px', padding: '1px 4px', borderRadius: '10px' }}>5</span></div>
-               <div style={{ color: colors.success }}><MessageSquare size={20}/></div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px' }}>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '700' }}>Rohit Sharma</div>
-                    <div style={{ fontSize: '10px', color: colors.textMuted }}>Senior Agent • <span style={{ color: colors.success }}>Online</span></div>
-                  </div>
-                  <img src="https://ui-avatars.com/api/?name=Rohit+Sharma&background=0D8ABC&color=fff" style={{ width: '36px', height: '36px', borderRadius: '50%' }} alt="User" />
-               </div>
-            </div>
-          </div>
-        </header>
-
-        {/* DASHBOARD CONTENT */}
-        <div style={{ padding: '24px' }}>
-          {/* TOP ACTIONS */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: colors.primaryBlue, fontSize: '12px', fontWeight: '600', marginBottom: '4px', cursor: 'pointer' }}>
-                <ChevronLeft size={14}/> Back to Leads
-              </div>
-              <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0 }}>Customer 360</h1>
-              <p style={{ fontSize: '12px', color: colors.textMuted }}>Complete view of customer and all interactions</p>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button style={{ ...btnStyle, border: '1px solid #16A34A', color: '#16A34A' }}><Phone size={14}/> Call</button>
-              <button style={{ ...btnStyle, border: '1px solid #16A34A', color: '#16A34A' }}><MessageSquare size={14}/> WhatsApp</button>
-              <button style={{ ...btnStyle, border: `1px solid ${colors.border}`, backgroundColor: '#FFF' }}>More Actions ▾</button>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '20px' }}>
-            {/* LEFT COLUMN */}
-            <div style={{ flex: 1 }}>
-              {/* PROFILE OVERVIEW CARD */}
-              <div style={{ ...s.card, display: 'flex', gap: '30px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ position: 'relative', marginBottom: '12px' }}>
-                    <img src="https://ui-avatars.com/api/?name=Amit+Verma&background=E2E8F0" style={{ width: '90px', borderRadius: '50%', border: '4px solid #F1F5F9' }} alt="Amit" />
-                  </div>
-                  <span style={{ ...s.badge, backgroundColor: '#FFF7ED', color: '#C2410C' }}>Hot Lead</span>
-                </div>
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '20px' }}>
-                  <div>
-                    <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      Amit Verma <CheckCircle size={16} fill={colors.success} color="#FFF" />
-                    </h2>
-                    <div style={{ fontSize: '13px', color: colors.textMuted, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <span style={{ display: 'flex', gap: '8px' }}><Phone size={14}/> +91 98765 43210</span>
-                      <span style={{ display: 'flex', gap: '8px' }}><Mail size={14}/> amit.verma@gmail.com</span>
-                      <span style={{ display: 'flex', gap: '8px' }}><MapPin size={14}/> Gurugram, Haryana - 122002</span>
-                    </div>
-                  </div>
-                  <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <DataRow label="Lead ID" val="LID2405311256" />
-                    <DataRow label="Lead Source" val="Website" />
-                    <DataRow label="Assigned On" val="31 May 2024" />
-                    <DataRow label="Assigned To" val="Rohit Sharma" />
-                  </div>
-                  <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <DataRow label="Date of Birth" val="15 Aug 1988 (35 Yrs)" />
-                    <DataRow label="Occupation" val="Salaried" />
-                    <DataRow label="Annual Income" val="₹ 12 - 15 Lakhs" />
-                    <DataRow label="Marital Status" val="Married" />
-                  </div>
-                </div>
-              </div>
-
-              {/* TABS */}
-              <div style={{ display: 'flex', gap: '24px', borderBottom: `1px solid ${colors.border}`, marginBottom: '20px' }}>
-                <Tab label="Overview" active />
-                <Tab label="Policies (2)" />
-                <Tab label="Proposals (1)" />
-                <Tab label="Interactions" />
-                <Tab label="Followups (3)" />
-                <Tab label="Documents" />
-                <Tab label="Notes" />
-                <Tab label="Timeline" />
-              </div>
-
-              {/* STATS ROW */}
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-                <StatCard icon={<LifeBuoy color="#2563EB"/>} label="Total Policies" val="2" sub="Active: 2" bg="#EFF6FF" />
-                <StatCard icon={<RefreshCcw color="#16A34A"/>} label="Total Premium" val="₹ 1,53,450" sub="Yearly" bg="#F0FDF4" />
-                <StatCard icon={<FileText color="#9333EA"/>} label="Total Proposals" val="1" sub="In Progress" bg="#FAF5FF" />
-                <StatCard icon={<Briefcase color="#EA580C"/>} label="Total Paid Premium" val="₹ 1,25,000" sub="This Year" bg="#FFF7ED" />
-                <StatCard icon={<History color="#DC2626"/>} label="Total Claims" val="0" sub="No Claims" bg="#FEF2F2" />
-              </div>
-
-              {/* DETAILS AND INTERESTS GRID */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div style={s.card}>
-                  <div style={s.sectionTitle}>Customer Details <Edit2 size={14} color={colors.primaryBlue}/></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-                    <GridRow label="PAN Number" val="ABCDE1234F" />
-                    <GridRow label="Aadhaar Number" val="XXXX-XXXX-5678" />
-                    <GridRow label="Alternate Mobile" val="+91 91234 56789" />
-                    <GridRow label="Gender" val="Male" />
-                    <GridRow label="Email ID" val="amit.verma@gmail.com" />
-                    <GridRow label="Address" val="C-1203, Bestech Park View Spa, Sector 67, Gurugram, Haryana - 122002" />
-                  </div>
-                </div>
-                <div style={s.card}>
-                  <div style={s.sectionTitle}>Interests & Requirements <Edit2 size={14} color={colors.primaryBlue}/></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <InterestItem text="Health Insurance for family of 4 members" />
-                    <InterestItem text="Term Insurance cover of 1 Cr" />
-                    <InterestItem text="Looking for savings + tax benefit plans" />
-                    <InterestItem text="Renewal reminder on WhatsApp" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT SIDEBAR */}
-            <div style={{ width: '300px' }}>
-               {/* LEAD STATUS */}
-               <div style={s.card}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                    <span style={{ fontWeight: '700', fontSize: '14px' }}>Lead Status</span>
-                    <span style={{ ...s.badge, backgroundColor: '#DCFCE7', color: '#166534' }}>In Progress</span>
-                  </div>
-                  <div style={{ backgroundColor: '#F8FAFC', padding: '15px', borderLeft: `4px solid ${colors.primaryBlue}`, borderRadius: '4px', marginBottom: '15px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', marginBottom: '4px' }}>Next Followup</div>
-                    <div style={{ fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14}/> 01 Jun 2024, 11:00 AM</div>
-                    <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontStyle: 'italic' }}>Call & share policy options</div>
-                  </div>
-                  <button style={{ width: '100%', backgroundColor: colors.primaryBlue, color: '#FFF', border: 'none', borderRadius: '6px', padding: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Plus size={16}/> Add Followup
-                  </button>
-               </div>
-
-               {/* ACTIVE POLICIES */}
-               <div style={s.card}>
-                 <div style={s.sectionTitle}>Active Policies (2) <span style={{ color: colors.primaryBlue, fontSize: '11px' }}>View All</span></div>
-                 <PolicyMini brand="HDFC Life" plan="Click 2 Protect Plus" policy="POL24053110234" premium="1,25,000" expiry="30 May 2025" />
-                 <PolicyMini brand="Star Health" plan="Health Plus" policy="POL24052809876" premium="28,450" expiry="27 May 2025" />
-               </div>
-
-               {/* RECENT INTERACTIONS */}
-               <div style={s.card}>
-                 <div style={s.sectionTitle}>Recent Interactions <span style={{ color: colors.primaryBlue, fontSize: '11px' }}>View All</span></div>
-                 <InteractionItem icon={<Phone size={12}/>} type="Outbound Call" time="31 May 2024, 10:30 AM" status="Connected" duration="06m 24s" />
-                 <InteractionItem icon={<MessageSquare size={12}/>} type="WhatsApp" time="30 May 2024, 04:45 PM" status="Message Sent" />
-               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        <footer style={{ height: '40px', backgroundColor: '#F8FAFC', borderTop: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', fontSize: '11px', color: colors.textMuted, shrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Info size={14} color={colors.primaryBlue} /> Note: Customer information is confidential and only for authorized use.
-          </div>
-          <div>All times are in Indian Standard Time (IST).</div>
-        </footer>
       </div>
+
+      <div style={{ display: 'flex', gap: '20px' }}>
+        {/* Main Data Column */}
+        <div style={{ flex: 1 }}>
+          {/* Profile Card */}
+          <div style={{ ...s.card, display: 'flex', gap: '30px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <img src="https://ui-avatars.com/api/?name=Amit+Verma&background=E2E8F0" style={{ width: '90px', borderRadius: '50%', border: '4px solid #F1F5F9', marginBottom: '12px' }} alt="Amit" />
+              <span style={{ ...s.badge, backgroundColor: '#FFF7ED', color: '#C2410C' }}>Hot Lead</span>
+            </div>
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  Amit Verma <CheckCircle size={16} fill={colors.success} color="#FFF" />
+                </h2>
+                <div style={{ fontSize: '13px', color: colors.textMuted, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ display: 'flex', gap: '8px' }}><Phone size={14}/> +91 98765 43210</span>
+                  <span style={{ display: 'flex', gap: '8px' }}><Mail size={14}/> amit.verma@gmail.com</span>
+                  <span style={{ display: 'flex', gap: '8px' }}><MapPin size={14}/> Gurugram, Haryana - 122002</span>
+                </div>
+              </div>
+              <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <DataRow label="Lead ID" val="LID2405311256" />
+                <DataRow label="Lead Source" val="Website" />
+                <DataRow label="Assigned On" val="31 May 2024" />
+                <DataRow label="Assigned To" val="Rohit Sharma" />
+              </div>
+              <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <DataRow label="Date of Birth" val="15 Aug 1988 (35 Yrs)" />
+                <DataRow label="Occupation" val="Salaried" />
+                <DataRow label="Annual Income" val="₹ 12 - 15 Lakhs" />
+                <DataRow label="Marital Status" val="Married" />
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div style={{ display: 'flex', gap: '24px', borderBottom: `1px solid ${colors.border}`, marginBottom: '20px' }}>
+            {['Overview', 'Policies (2)', 'Proposals (1)', 'Interactions', 'Followups (3)', 'Documents', 'Notes', 'Timeline'].map((tab, i) => (
+              <div key={tab} style={{ 
+                padding: '10px 0', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                color: i === 0 ? colors.primaryBlue : colors.textMuted,
+                borderBottom: i === 0 ? `2px solid ${colors.primaryBlue}` : '2px solid transparent'
+              }}>{tab}</div>
+            ))}
+          </div>
+
+          {/* Key Stats Row */}
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+            <StatCard icon={<LifeBuoy color="#2563EB"/>} label="Total Policies" val="2" sub="Active: 2" bg="#EFF6FF" />
+            <StatCard icon={<RefreshCcw color="#16A34A"/>} label="Total Premium" val="₹ 1,53,450" sub="Yearly" bg="#F0FDF4" />
+            <StatCard icon={<FileText color="#9333EA"/>} label="Total Proposals" val="1" sub="In Progress" bg="#FAF5FF" />
+            <StatCard icon={<Briefcase color="#EA580C"/>} label="Total Paid Premium" val="₹ 1,25,000" sub="This Year" bg="#FFF7ED" />
+            <StatCard icon={<History color="#DC2626"/>} label="Total Claims" val="0" sub="No Claims" bg="#FEF2F2" />
+          </div>
+
+          {/* Two-Column Details Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div style={s.card}>
+              <div style={s.sectionTitle}>Customer Details <Edit2 size={14} color={colors.primaryBlue}/></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
+                <GridRow label="PAN Number" val="ABCDE1234F" />
+                <GridRow label="Aadhaar Number" val="XXXX-XXXX-5678" />
+                <GridRow label="Alternate Mobile" val="+91 91234 56789" />
+                <GridRow label="Email ID" val="amit.verma@gmail.com" />
+                <GridRow label="Address" val="C-1203, Bestech Park View Spa, Sector 67, Gurugram, Haryana - 122002" />
+              </div>
+            </div>
+            <div style={s.card}>
+              <div style={s.sectionTitle}>Interests & Requirements <Edit2 size={14} color={colors.primaryBlue}/></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {['Health Insurance for family of 4 members', 'Term Insurance cover of 1 Cr', 'Looking for savings + tax benefit plans', 'Renewal reminder on WhatsApp'].map(txt => (
+                  <div key={txt} style={{ display: 'flex', gap: '8px', fontSize: '13px', alignItems: 'flex-start' }}>
+                    <CheckCircle size={14} color="#22C55E" style={{ marginTop: '2px' }} />
+                    <span>{txt}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Status Sidebar (Within Content Area) */}
+        <div style={{ width: '300px' }}>
+           <div style={s.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                <span style={{ fontWeight: '700', fontSize: '14px' }}>Lead Status</span>
+                <span style={{ ...s.badge, backgroundColor: '#DCFCE7', color: '#166534' }}>In Progress</span>
+              </div>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '15px', borderLeft: `4px solid ${colors.primaryBlue}`, borderRadius: '4px', marginBottom: '15px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', marginBottom: '4px' }}>Next Followup</div>
+                <div style={{ fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14}/> 01 Jun 2024, 11:00 AM</div>
+                <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontStyle: 'italic' }}>Call & share policy options</div>
+              </div>
+              <button style={{ width: '100%', backgroundColor: colors.primaryBlue, color: '#FFF', border: 'none', borderRadius: '6px', padding: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Plus size={16}/> Add Followup
+              </button>
+           </div>
+
+           <div style={s.card}>
+             <div style={s.sectionTitle}>Active Policies (2) <span style={{ color: colors.primaryBlue, fontSize: '11px', cursor: 'pointer' }}>View All</span></div>
+             <PolicyMini brand="HDFC Life" plan="Click 2 Protect Plus" premium="1,25,000" expiry="30 May 2025" />
+             <PolicyMini brand="Star Health" plan="Health Plus" premium="28,450" expiry="27 May 2025" />
+           </div>
+        </div>
+      </div>
+
+      {/* Internal Footer */}
+      <footer style={{ marginTop: '20px', borderTop: `1px solid ${colors.border}`, paddingTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.textMuted }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Info size={14} color={colors.primaryBlue} /> Note: Customer information is confidential and only for authorized use.
+        </div>
+        <span>All times are in Indian Standard Time (IST).</span>
+      </footer>
     </div>
   );
 };
 
-// UI COMPONENTS
-const SideItem = ({ icon, label, active, badge }) => (
-  <div style={{ 
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-    padding: '12px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: '500',
-    backgroundColor: active ? 'rgba(0, 82, 204, 0.2)' : 'transparent',
-    color: active ? '#FFF' : 'inherit',
-    borderLeft: active ? '4px solid #0052CC' : '4px solid transparent'
-  }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>{icon} {label}</div>
-    {badge && <span style={{ backgroundColor: '#EF4444', color: '#FFF', fontSize: '10px', padding: '1px 6px', borderRadius: '10px' }}>{badge}</span>}
-  </div>
-);
-
-const btnStyle = { padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' };
-
+// Internal Helper Components
 const DataRow = ({ label, val }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
     <span style={{ color: '#64748B' }}>{label}</span>
@@ -553,12 +460,11 @@ const DataRow = ({ label, val }) => (
   </div>
 );
 
-const Tab = ({ label, active }) => (
-  <div style={{ 
-    padding: '10px 0', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
-    color: active ? '#0052CC' : '#64748B',
-    borderBottom: active ? '2px solid #0052CC' : '2px solid transparent'
-  }}>{label}</div>
+const GridRow = ({ label, val }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', marginBottom: '4px' }}>
+    <span style={{ color: '#64748B' }}>{label}</span>
+    <span style={{ fontWeight: '600' }}>{val}</span>
+  </div>
 );
 
 const StatCard = ({ icon, label, val, sub, bg }) => (
@@ -566,50 +472,19 @@ const StatCard = ({ icon, label, val, sub, bg }) => (
     <div style={{ width: '36px', height: '36px', backgroundColor: bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>{icon}</div>
     <div style={{ fontSize: '10px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
     <div style={{ fontSize: '18px', fontWeight: '800' }}>{val}</div>
-    <div style={{ fontSize: '10px', color: '#16A34A', fontWeight: '600', marginTop: '2px' }}>{sub}</div>
+    <div style={{ fontSize: '10px', color: '#16A34A', fontWeight: '600' }}>{sub}</div>
   </div>
 );
 
-const GridRow = ({ label, val }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr' }}>
-    <span style={{ color: '#64748B' }}>{label}</span>
-    <span style={{ fontWeight: '600' }}>{val}</span>
-  </div>
-);
-
-const InterestItem = ({ text }) => (
-  <div style={{ display: 'flex', gap: '8px', fontSize: '13px', alignItems: 'flex-start' }}>
-    <CheckCircle size={14} color="#22C55E" style={{ marginTop: '2px' }} />
-    <span>{text}</span>
-  </div>
-);
-
-const PolicyMini = ({ brand, plan, policy, premium, expiry }) => (
+const PolicyMini = ({ brand, plan, premium, expiry }) => (
   <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '12px', marginBottom: '12px' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
       <div style={{ fontSize: '12px', fontWeight: '800' }}>{brand} - <span style={{ fontWeight: '500' }}>{plan}</span></div>
       <span style={{ fontSize: '9px', backgroundColor: '#DCFCE7', color: '#166534', padding: '1px 4px', borderRadius: '3px' }}>Active</span>
     </div>
-    <div style={{ fontSize: '10px', color: '#64748B' }}>Policy No. {policy}</div>
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
       <span>Premium: <span style={{ fontWeight: '700' }}>₹ {premium}</span></span>
       <span>Expiry: <span style={{ fontWeight: '700' }}>{expiry}</span></span>
-    </div>
-  </div>
-);
-
-const InteractionItem = ({ icon, type, time, status, duration }) => (
-  <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-    <div style={{ backgroundColor: '#F1F5F9', padding: '6px', borderRadius: '50%', height: 'fit-content' }}>{icon}</div>
-    <div style={{ flex: 1 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '700' }}>
-        <span>{type}</span>
-        <span style={{ color: status === 'Connected' ? '#16A34A' : '#0052CC', fontSize: '10px' }}>{status}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
-        <span>{time}</span>
-        {duration && <span>{duration}</span>}
-      </div>
     </div>
   </div>
 );
