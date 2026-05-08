@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from "react-redux";
-import { fetchDashboardStats } from "../features/dashboard/dashboardSlice";
-import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { fetchDashboardStats } from "../features/dashboard/dashboardSlice";
 import api from "../services/api";
+import { 
+  LayoutDashboard, Users, PhoneCall, CheckSquare, 
+  CircleDollarSign, BarChart3, Bell, Settings, 
+  UserCircle, Headphones, Mic, PhoneOff, ChevronDown
+} from 'lucide-react';
 
-function Dashboard() {
+const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { data, loading } = useSelector((state) => state.dashboard);
@@ -38,218 +42,295 @@ function Dashboard() {
     }
   };
 
-  if (loading || !data) return <div style={styles.loading}>Syncing Dashboard...</div>;
+  if (loading || !data) {
+    return <div className="flex h-screen items-center justify-center text-slate-500 font-medium">Syncing Dashboard...</div>;
+  }
 
   return (
-    <div style={styles.page}>
-      <Navbar />
-      <div style={styles.container}>
-        
-        {/* CHECK-IN BANNER */}
-        {!isCheckedIn && (
-          <div style={styles.checkInBanner}>
-            <div style={styles.bannerText}>
-              <span style={{ marginRight: '10px' }}>🕒</span>
-              You haven't checked in for your shift yet.
-            </div>
-            <button 
-              onClick={handleCheckIn} 
-              style={styles.checkInBtn} 
-              disabled={checkInLoading}
-            >
-              {checkInLoading ? "Processing..." : "Check-in Now"}
-            </button>
+    <div className="flex min-h-screen bg-[#f0f4f8] font-sans text-slate-700">
+      
+      {/* Sidebar - As seen in image_19f1e1.jpg */}
+      <aside className="w-64 bg-white border-r border-gray-200">
+        <div className="p-4 flex items-center gap-2 bg-[#1e4eb8] text-white">
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <PhoneCall size={18} />
           </div>
-        )}
+          <span className="font-bold text-lg leading-tight">Agent Dashboard</span>
+          <ChevronDown size={16} className="ml-auto opacity-70" />
+        </div>
+        
+        <nav className="mt-4">
+          <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active />
+          <NavItem icon={<Users size={20}/>} label="Leads" onClick={() => navigate('/agent/leads')} />
+          <NavItem icon={<PhoneCall size={20}/>} label="Call History" />
+          <NavItem icon={<CheckSquare size={20}/>} label="Tasks" />
+          <NavItem icon={<CircleDollarSign size={20}/>} label="My Earnings" />
+          <NavItem icon={<BarChart3 size={20}/>} label="Reports" />
+        </nav>
+      </aside>
 
-        {/* TOP WELCOME BAR */}
-        <header style={styles.header}>
-          <h1 style={styles.welcome}>Welcome, {data.agent_name || 'Agent'}!</h1>
-          <div style={styles.headerStats}>
-            <span style={{fontWeight: "bold", color: "#3b82f6"}}>Today's Effort:</span>
-            <strong>📞 Calls: {data.header_stats?.calls || 0}</strong> | 
-            <strong>💰 Sales: {data.header_stats?.sales || 0}</strong> | 
-            <strong>✅ Done Follow-ups: {data.header_stats?.followups_completed || 0}</strong>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto">
+        
+        {/* Header Bar */}
+        <header className="bg-[#1e4eb8] text-white p-4 flex justify-between items-center shadow-md">
+          <h1 className="text-2xl font-semibold">Welcome, {data.agent_name || 'Sarah'}!</h1>
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-2 rounded-full cursor-pointer hover:bg-white/30"><Bell size={20} /></div>
+            <div className="bg-white/20 p-2 rounded-full cursor-pointer hover:bg-white/30"><Settings size={20} /></div>
+            <div className="bg-white/20 p-2 rounded-full cursor-pointer hover:bg-white/30"><UserCircle size={20} /></div>
           </div>
         </header>
 
-        {/* ROW 1: KPI CARDS */}
-        <div style={styles.cardGrid}>
-          <MetricCard 
-            title="New Leads" 
-            value={data.cards?.new_leads || 0} 
-            onClick={() => navigate(`/agent/leads`, { state: { tab: 'New' } })} 
-            color="#3b82f6" 
-          />
-          <MetricCard 
-            title="Follow-Ups Due" 
-            value={data.cards?.pending_followups || 0} 
-            onClick={() => navigate(`/agent/leads`, { state: { tab: 'Follow-Up' } })} 
-            color="#f59e0b" 
-          />
-          <MetricCard title="Personal Score" value={data.cards?.personal_score || 0} color="#10b981" />
-          <MetricCard title="Target Progress" value={`${data.cards?.target_progress || 0}%`} color="#8b5cf6" />
-        </div>
+        <div className="p-6">
+          {/* Top Stats Bar */}
+          <div className="mb-6 flex gap-6 text-[13px] items-center text-slate-600">
+            <span className="opacity-80">Today's Stats:</span>
+            <span className="font-semibold">Calls Made: <b className="text-lg ml-1">{data.header_stats?.calls || 0}</b></span>
+            <span className="text-gray-300">|</span>
+            <span className="font-semibold">Sales Closed: <b className="text-lg ml-1">{data.header_stats?.sales || 0}</b></span>
+            <span className="text-gray-300">|</span>
+            <span className="font-semibold">Follow-ups: <b className="text-lg ml-1">{data.header_stats?.followups_completed || 0}</b></span>
+          </div>
 
-        {/* MAIN DASHBOARD CONTENT */}
-        <div style={styles.mainGrid}>
-          
-          {/* CALL STATUS GAUGE */}
-          <section style={{...styles.card, gridColumn: "span 2"}}>
-            <h3 style={styles.cardTitle}>Daily Call Performance</h3>
-            <div style={styles.gaugeContainer}>
-              <Gauge label="Connected" value={data.call_metrics?.connected || 0} color="#10b981" />
-              <Gauge label="No Answer" value={data.call_metrics?.no_answer || 0} color="#ef4444" />
-              <Gauge label="Avg Duration" value={data.call_metrics?.avg_duration || "0m"} color="#3b82f6" />
-            </div>
-          </section>
-
-          {/* LIVE STATUS CARD */}
-          <section style={styles.liveCallCard}>
-            <div style={styles.liveHeader}>📡 CURRENT STATUS</div>
-            <div style={styles.liveBody}>
-              <div style={styles.avatarLarge}>{data.agent_name?.charAt(0) || 'A'}</div>
+          {/* KPI Cards Row */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <MetricCard title="New Leads" value={data.cards?.new_leads || 0} onClick={() => navigate(`/agent/leads`, { state: { tab: 'New' } })} />
+            <MetricCard title="Pending Follow-Ups" value={data.cards?.pending_followups || 0} onClick={() => navigate(`/agent/leads`, { state: { tab: 'Follow-Up' } })} />
+            <MetricCard title="Today's Sales" value={`₹${data.revenue?.total_premium || 0}`} />
+            
+            {/* Target Progress Card */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
               <div>
-                <strong>{isCheckedIn ? "Online & Active" : "Offline"}</strong>
-                <div style={{fontSize: "0.8rem", opacity: 0.8}}>
-                    {isCheckedIn ? "Ready for new leads" : "Please check in"}
+                <p className="text-[10px] font-bold text-blue-800 uppercase mb-2">Monthly Target Progress</p>
+                <div className="w-28 h-2 bg-gray-100 rounded-full">
+                  <div 
+                    className="bg-teal-500 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${data.cards?.target_progress || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div className="relative flex items-center justify-center">
+                <svg className="w-14 h-14 transform -rotate-90">
+                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="5" fill="transparent" className="text-gray-100" />
+                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="5" fill="transparent" strokeDasharray={151} strokeDashoffset={151 - (151 * (data.cards?.target_progress || 0)) / 100} className="text-green-500" />
+                </svg>
+                <span className="absolute text-xs font-bold">{data.cards?.target_progress || 0}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Call Status & Live Call Section */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div className="col-span-2 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+              <div className="bg-gradient-to-r from-blue-700 to-blue-500 p-3 text-white text-sm font-bold">Call Status</div>
+              <div className="p-8 flex justify-around items-center">
+                <CircularGauge label="Connected Calls" value={data.call_metrics?.connected || 0} color="text-teal-400" />
+                <CircularGauge label="Missed Calls" value={data.call_metrics?.no_answer || 0} color="text-orange-400" />
+                <div className="text-center">
+                    <div className="w-24 h-12 border-t-8 border-x-8 border-blue-500 rounded-t-full flex items-end justify-center pb-2">
+                        <span className="text-xl font-bold">{data.call_metrics?.avg_duration || "0m"}</span>
+                    </div>
+                    <p className="text-[10px] mt-2 font-bold uppercase text-slate-500">Avg Call Duration</p>
                 </div>
               </div>
             </div>
-            <div style={styles.liveActions}>
-              <button style={styles.btnListen} onClick={() => navigate('/agent/leads')}>View All Leads</button>
-            </div>
-          </section>
 
-          {/* RECENT ACTIVITY */}
-          <section style={styles.card}>
-            <h3 style={styles.cardTitle}>Recent Conversions</h3>
-            {(data.recent_conversions || []).map((l, i) => (
-              <div key={i} style={styles.listRow}>
-                <span>{l.name}</span>
-                <span style={getStatusBadge('converted')}>PAID</span>
-              </div>
-            ))}
-          </section>
-
-          {/* 🔥 PRIORITY SAVES */}
-          <section style={styles.atRiskCard}>
-            <div style={styles.cardHeader}>
-              <h3 style={styles.atRiskTitle}>🔥 Priority Saves</h3>
-              <p style={styles.atRiskSubtitle}>Scheduled calls due very soon</p>
-            </div>
-
-            <div style={styles.atRiskList}>
-              {data.at_risk_leads && data.at_risk_leads.length > 0 ? (
-                data.at_risk_leads.map((lead) => (
-                  <div key={lead.id} style={styles.atRiskRow}>
-                    <div style={styles.leadMain}>
-                      <div style={styles.atRiskName}>{lead.name}</div>
-                      <div style={styles.atRiskPhone}>{lead.phone}</div>
+            {/* Live Call / Check-in Card */}
+            <div className={`rounded-xl shadow-lg p-4 text-white relative transition-colors ${isCheckedIn ? 'bg-[#1e4eb8]' : 'bg-slate-700'}`}>
+                <div className="flex justify-between items-center mb-4 text-[10px] font-bold uppercase">
+                    <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${isCheckedIn ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div> 
+                        {isCheckedIn ? 'Live Call' : 'Offline'}
                     </div>
-                    
-                    <div style={styles.timerContainer}>
-                      <span style={{
-                          ...styles.timerText, 
-                          color: lead.is_overdue ? '#ef4444' : '#f59e0b'
-                      }}>
-                        {lead.is_overdue ? "OVERDUE" : `Due in ${lead.minutes_left}m`}
-                      </span>
-                    </div>
-
-                    <button 
-                      style={styles.saveBtn}
-                      onClick={() => navigate(`/lead/${lead.id}`)}
-                    >
-                      Open
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div style={styles.emptyState}>
-                  ✅ All scheduled calls are up to date!
+                    <div className="flex gap-2 opacity-60"><Settings size={14}/> <ChevronDown size={14}/></div>
                 </div>
-              )}
+                
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white/30">
+                        {data.agent_name?.charAt(0) || 'S'}
+                    </div>
+                    <div>
+                        <p className="font-bold">{data.agent_name || 'Sarah'}</p>
+                        <p className="text-xs opacity-70">{isCheckedIn ? "00:12" : "Not Checked In"}</p>
+                    </div>
+                </div>
+
+                <div className="flex gap-2">
+                    {!isCheckedIn ? (
+                        <button 
+                            onClick={handleCheckIn}
+                            disabled={checkInLoading}
+                            className="w-full bg-orange-500 hover:bg-orange-600 py-2.5 rounded-lg text-xs font-bold"
+                        >
+                            {checkInLoading ? "Processing..." : "START SHIFT / CHECK-IN"}
+                        </button>
+                    ) : (
+                        <>
+                            <button className="flex-1 bg-green-500 py-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 uppercase"><Headphones size={14}/> Listen</button>
+                            <button className="flex-1 bg-teal-500 py-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 uppercase"><Mic size={14}/> Whisper</button>
+                            <button className="flex-1 bg-red-500 py-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 uppercase"><PhoneOff size={14}/> End Call</button>
+                        </>
+                    )}
+                </div>
             </div>
-          </section>
+          </div>
 
-          {/* REVENUE OVERVIEW */}
-          <section style={styles.card}>
-            <h3 style={styles.cardTitle}>Earnings Summary</h3>
-            <div style={styles.earningItem}>Total Premium: <strong>₹ {data.revenue?.total_premium || 0}</strong></div>
-            <div style={styles.earningItem}>Pending Collection: <strong style={{color: '#f59e0b'}}>₹ {data.revenue?.pending_amount || 0}</strong></div>
-          </section>
+          {/* Bottom Grid: Tables and Lists */}
+          <div className="grid grid-cols-3 gap-6">
+            
+            {/* Lead List Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-3 flex justify-between items-center border-b">
+                    <span className="text-blue-800 font-bold text-[13px]">Lead List</span>
+                    <div className="flex gap-2 text-gray-400"><Settings size={14}/> <ChevronDown size={14}/></div>
+                </div>
+                <table className="w-full text-[11px]">
+                    <thead className="bg-gray-50 text-gray-400 uppercase font-bold">
+                        <tr>
+                            <th className="p-3 text-left">Name</th>
+                            <th className="p-3 text-left">Contact</th>
+                            <th className="p-3 text-left">Status</th>
+                            <th className="p-3 text-left">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {(data.recent_conversions || []).slice(0, 4).map((lead, i) => (
+                            <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                                <td className="p-3 font-bold">{lead.name}</td>
+                                <td className="p-3 text-gray-500">9856231470</td>
+                                <td className="p-3">
+                                    <span className="bg-green-500 text-white px-2 py-0.5 rounded text-[9px] uppercase font-bold">New</span>
+                                </td>
+                                <td className="p-3">
+                                    <button onClick={() => navigate(`/lead/${lead.id}`)} className="bg-[#1e4eb8] text-white px-3 py-1 rounded flex items-center gap-1 text-[9px] uppercase font-bold">
+                                        <PhoneCall size={10}/> Call
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
+            {/* Tasks & Script Section */}
+            <div className="flex flex-col gap-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-blue-800 font-bold text-[13px]">Priority Saves</span>
+                        <div className="flex gap-2 text-gray-400"><Settings size={14}/> <ChevronDown size={14}/></div>
+                    </div>
+                    <div className="space-y-3">
+                        {(data.at_risk_leads || []).map((lead, i) => (
+                            <div key={i} className="flex items-center justify-between group cursor-pointer" onClick={() => navigate(`/lead/${lead.id}`)}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${lead.is_overdue ? 'bg-red-500 border-red-500' : 'border-gray-300'}`}>
+                                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                    </div>
+                                    <span className="text-[11px] font-medium text-slate-700">{lead.name}</span>
+                                </div>
+                                <span className={`text-[9px] font-bold ${lead.is_overdue ? 'text-red-500' : 'text-orange-500'}`}>
+                                    {lead.is_overdue ? 'OVERDUE' : `${lead.minutes_left}m`}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <span className="text-blue-800 font-bold text-[13px] block mb-2">Script & Notes</span>
+                    <p className="text-[11px] text-gray-600 leading-relaxed mb-2 italic">
+                        "Hello, this is {data.agent_name} from Insurance. I wanted to talk..."
+                    </p>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Note: Interested in term plan</div>
+                </div>
+            </div>
+
+            {/* Performance Overview & Earnings */}
+            <div className="flex flex-col gap-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <span className="text-blue-800 font-bold text-[13px] block mb-4">Performance Overview</span>
+                    <div className="space-y-3 text-[11px]">
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <span className="font-bold">Today's Sales</span>
+                            <span className="text-blue-600 font-bold text-sm">₹{data.revenue?.total_premium || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1">
+                            <span className="text-slate-500">Total Premium Collected</span>
+                            <span className="font-bold text-slate-800">₹{data.revenue?.total_premium || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-500">Pending Amount</span>
+                            <span className="font-bold text-orange-500">₹{data.revenue?.pending_amount || 0}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-[#1e4eb8] p-2 text-white flex justify-between items-center text-[10px] font-bold uppercase">
+                        <span className="flex items-center gap-2"><CircleDollarSign size={14}/> My Earnings</span>
+                        <div className="flex gap-2 opacity-70"><Settings size={12}/> <ChevronDown size={12}/></div>
+                    </div>
+                    <div className="p-4 space-y-2 text-[12px]">
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Commission Earned:</span> 
+                            <span className="font-bold">₹{(data.revenue?.total_premium * 0.1).toFixed(0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-500">Bonuses:</span> 
+                            <span className="font-bold text-teal-600">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
-}
-
-// --- SUB-COMPONENTS ---
-const MetricCard = ({ title, value, color, onClick }) => (
-  <div 
-    style={{
-        ...styles.metricCard, 
-        cursor: onClick ? 'pointer' : 'default',
-    }} 
-    onClick={onClick}
-  >
-    <div style={{...styles.indicator, backgroundColor: color}} />
-    <div style={{color: "#64748b", fontSize: "0.8rem", fontWeight: "600"}}>{title}</div>
-    <div style={{fontSize: "1.6rem", fontWeight: "800", marginTop: "5px"}}>{value}</div>
-  </div>
-);
-
-const Gauge = ({ label, value, color }) => (
-  <div style={{textAlign: "center"}}>
-    <div style={{...styles.gauge, borderColor: color}}>{value}</div>
-    <div style={{fontSize: "0.7rem", color: "#64748b", marginTop: "8px"}}>{label}</div>
-  </div>
-);
-
-const getStatusBadge = (status) => ({
-    fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold',
-    backgroundColor: status === 'converted' ? '#dcfce7' : '#f1f5f9',
-    color: status === 'converted' ? '#166534' : '#475569'
-});
-
-const styles = {
-  page: { backgroundColor: "#f1f5f9", minHeight: "100vh", paddingTop: "80px", fontFamily: "'Inter', sans-serif" },
-  container: { maxWidth: "1300px", margin: "0 auto", padding: "20px" },
-  checkInBanner: { backgroundColor: "#fffbeb", border: "1px solid #fef3c7", padding: "15px 25px", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" },
-  bannerText: { color: "#92400e", fontWeight: "600", fontSize: "0.95rem" },
-  checkInBtn: { backgroundColor: "#d97706", color: "white", border: "none", padding: "8px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" },
-  header: { marginBottom: "20px" },
-  welcome: { fontSize: "1.6rem", fontWeight: "800", color: "#0f172a" },
-  headerStats: { display: "flex", gap: "15px", fontSize: "0.8rem", color: "#475569", marginTop: "10px", backgroundColor: "white", padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0" },
-  cardGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "25px" },
-  metricCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", position: "absolute", border: "1px solid #e2e8f0", transition: "transform 0.2s", ":hover": { transform: "translateY(-2px)" } },
-  metricCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", position: "relative", overflow: "hidden", border: "1px solid #e2e8f0" },
-  indicator: { position: "absolute", top: 0, left: 0, width: "100%", height: "4px" },
-  mainGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" },
-  card: { backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" },
-  cardTitle: { fontSize: "0.9rem", fontWeight: "700", marginBottom: "15px", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" },
-  atRiskCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #fee2e2", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" },
-  atRiskTitle: { margin: 0, fontSize: "0.9rem", fontWeight: "800", color: "#b91c1c" },
-  atRiskSubtitle: { margin: "2px 0 15px 0", fontSize: "0.75rem", color: "#94a3b8" },
-  atRiskRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f8fafc" },
-  atRiskName: { fontSize: "0.85rem", fontWeight: "700", color: "#1e293b" },
-  atRiskPhone: { fontSize: "0.7rem", color: "#64748b" },
-  timerText: { fontSize: "0.8rem", fontWeight: "800" },
-  saveBtn: { backgroundColor: "#1e293b", color: "white", border: "none", padding: "5px 12px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "600", cursor: "pointer" },
-  emptyState: { padding: "30px", textAlign: "center", color: "#10b981", fontSize: "0.8rem", fontWeight: "600" },
-  gaugeContainer: { display: "flex", justifyContent: "space-around" },
-  gauge: { width: "65px", height: "65px", borderRadius: "50%", border: "5px solid", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.95rem" },
-  liveCallCard: { backgroundColor: "#1e3a8a", color: "white", padding: "20px", borderRadius: "12px" },
-  liveHeader: { fontSize: "0.75rem", fontWeight: "bold", marginBottom: "20px", opacity: 0.8 },
-  liveBody: { display: "flex", gap: "15px", alignItems: "center", marginBottom: "25px" },
-  avatarLarge: { width: "45px", height: "45px", borderRadius: "50%", backgroundColor: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "1.2rem" },
-  liveActions: { display: "flex", gap: "10px" },
-  btnListen: { flex: 1, padding: "10px", border: "none", borderRadius: "6px", backgroundColor: "#10b981", color: "white", fontWeight: "bold", cursor: "pointer" },
-  listRow: { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f8fafc", fontSize: "0.85rem" },
-  earningItem: { padding: "8px 0", fontSize: "0.9rem" },
-  loading: { textAlign: "center", marginTop: "100px", color: "#64748b" }
 };
+
+// --- Atomic UI Components ---
+
+const NavItem = ({ icon, label, active = false, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`flex items-center gap-3 px-6 py-3.5 cursor-pointer transition-all ${
+        active 
+        ? 'bg-[#1e4eb8] text-white border-l-4 border-blue-300' 
+        : 'text-slate-500 hover:bg-gray-50'
+    }`}
+  >
+    {icon}
+    <span className="text-[13px] font-bold">{label}</span>
+  </div>
+);
+
+const MetricCard = ({ title, value, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 ${onClick ? 'cursor-pointer hover:border-blue-300 transition-colors' : ''}`}
+  >
+    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 leading-none">{title}</p>
+    <p className="text-3xl font-extrabold text-slate-800">{value}</p>
+  </div>
+);
+
+const CircularGauge = ({ label, value, color }) => (
+  <div className="text-center">
+    <div className="relative w-20 h-20 flex items-center justify-center">
+      <svg className="w-20 h-20 transform -rotate-90">
+        <circle cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-gray-100" />
+        <circle 
+            cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="6" fill="transparent" 
+            strokeDasharray={213} 
+            strokeDashoffset={213 - (213 * 75) / 100} 
+            className={color} 
+        />
+      </svg>
+      <span className="absolute text-xl font-extrabold text-slate-800">{value}</span>
+    </div>
+    <p className="text-[10px] mt-2 font-bold uppercase text-slate-500">{label}</p>
+  </div>
+);
 
 export default Dashboard;
