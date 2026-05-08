@@ -60,7 +60,6 @@ const Dashboard = () => {
 
   return (
     <div style={styles.dashboardWrapper}>
-      {/* Header with sharper edges */}
       <header style={styles.header}>
         <h1 style={styles.welcomeText}>Welcome, {stats.agent_name || 'Sarah'}!</h1>
         <div style={styles.headerIcons}>
@@ -71,7 +70,6 @@ const Dashboard = () => {
       </header>
 
       <div style={styles.contentBody}>
-        {/* Stats Row */}
         <div style={styles.topStatsRow}>
           <span style={{ color: '#546e7a', fontWeight: '500' }}>Today's Stats:</span>
           <span style={styles.statItem}>Calls Made: <b style={styles.statVal}>{stats.header_stats?.calls || 25}</b></span>
@@ -81,7 +79,6 @@ const Dashboard = () => {
           <span style={styles.statItem}>Follow-ups: <b style={styles.statVal}>{stats.header_stats?.followups_completed || 6}</b></span>
         </div>
 
-        {/* KPI Grid - Sharper corners (4px) */}
         <div style={styles.kpiGrid}>
           <MetricCard title="New Leads" value={stats.cards?.new_leads || "12"} />
           <MetricCard title="Pending Follow-Ups" value={stats.cards?.pending_followups || "8"} />
@@ -96,23 +93,23 @@ const Dashboard = () => {
               </div>
               <div style={styles.progressRing}>
                 <span style={styles.ringText}>{stats.cards?.target_progress || 60}%</span>
-                <svg width="50" height="50" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="16" fill="none" stroke="#eef2f6" strokeWidth="4" />
-                  <circle cx="18" cy="18" r="16" fill="none" stroke="#4caf50" strokeWidth="4" 
-                          strokeDasharray={`${stats.cards?.target_progress || 60}, 100`} transform="rotate(-90 18 18)" />
+                <svg width="60" height="60" viewBox="0 0 40 40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="#eef2f6" strokeWidth="6" />
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="#4caf50" strokeWidth="6" 
+                          strokeDasharray={`${stats.cards?.target_progress || 60}, 100`} transform="rotate(-90 20 20)" />
                 </svg>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Middle Row */}
         <div style={styles.middleGrid}>
           <div style={{ ...styles.card, gridColumn: 'span 2', padding: 0 }}>
             <div style={styles.blueBanner}>Call Status</div>
             <div style={styles.performanceFlex}>
-              <RingDisplay label="Connected Calls" value={stats.call_metrics?.connected || 18} color="#26a69a" />
-              <RingDisplay label="Missed Calls" value={stats.call_metrics?.no_answer || 5} color="#ff7043" />
+              {/* Semi-Circle Gauges based on image_19f1e1.jpg */}
+              <SemiCircleGauge label="Connected Calls" value={stats.call_metrics?.connected || 18} color="#26a69a" />
+              <SemiCircleGauge label="Missed Calls" value={stats.call_metrics?.no_answer || 5} color="#ef5350" />
               <div style={styles.durationBox}>
                 <div style={styles.arcWidget}>{stats.call_metrics?.avg_duration || "3m 15s"}</div>
                 <p style={styles.tinyLabel}>Avg Call Duration</p>
@@ -143,7 +140,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Section with Block Dividers */}
         <div style={styles.bottomGrid}>
           <div style={{ ...styles.card, padding: 0 }}>
             <div style={styles.widgetHeader}>
@@ -207,18 +203,55 @@ const Dashboard = () => {
   );
 };
 
-// Sub-components
+// --- Sub-components with Semi-Circle Logic ---
+
+const SemiCircleGauge = ({ label, value, color }) => {
+  const radius = 35;
+  const strokeWidth = 8;
+  const normalizedRadius = radius - strokeWidth / 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  // Arc length is half the circumference for a semi-circle
+  const arcLength = circumference / 2;
+  
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ position: 'relative', width: '100px', height: '60px', overflow: 'hidden' }}>
+        <svg height="100" width="100" style={{ transform: 'rotate(-180deg)' }}>
+          {/* Background Arc */}
+          <circle
+            stroke="#eef2f6"
+            fill="transparent"
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${arcLength} ${circumference}`}
+            r={normalizedRadius}
+            cx="50"
+            cy="50"
+          />
+          {/* Progress Arc */}
+          <circle
+            stroke={color}
+            fill="transparent"
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${(arcLength * 0.75)} ${circumference}`} // Example percentage fill
+            strokeLinecap="round"
+            r={normalizedRadius}
+            cx="50"
+            cy="50"
+          />
+        </svg>
+        <div style={{ position: 'absolute', bottom: '0', width: '100%', textAlign: 'center', fontSize: '24px', fontWeight: 'bold', color: '#102a43' }}>
+          {value}
+        </div>
+      </div>
+      <p style={styles.tinyLabel}>{label}</p>
+    </div>
+  );
+};
+
 const MetricCard = ({ title, value }) => (
   <div style={styles.card}>
     <p style={styles.cardLabel}>{title}</p>
     <p style={styles.bigNum}>{value}</p>
-  </div>
-);
-
-const RingDisplay = ({ label, value, color }) => (
-  <div style={{ textAlign: 'center' }}>
-    <div style={{ ...styles.ringBox, borderColor: color }}>{value}</div>
-    <p style={styles.tinyLabel}>{label}</p>
   </div>
 );
 
@@ -232,7 +265,6 @@ const TaskLine = ({ checked, text }) => (
 );
 
 const styles = {
-  // Background matched to the light blue-gray in the photo
   dashboardWrapper: { display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', backgroundColor: '#e9eff6' },
   header: { backgroundColor: '#1e4eb8', color: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   welcomeText: { margin: 0, fontSize: '22px', fontWeight: '700' },
@@ -244,10 +276,7 @@ const styles = {
   statVal: { fontSize: '18px', color: '#102a43', marginLeft: '4px' },
   pipe: { color: '#b0bec5' },
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '20px' },
-  
-  // Edges are not that curved (4px) and block lines (border) used
   card: { backgroundColor: 'white', padding: '18px', borderRadius: '4px', border: '1px solid #d1d9e6', boxShadow: 'none' },
-  
   cardLabel: { fontSize: '11px', fontWeight: 'bold', color: '#546e7a', textTransform: 'uppercase', marginBottom: '8px', marginTop: 0 },
   bigNum: { fontSize: '26px', fontWeight: 'bold', margin: 0, color: '#102a43' },
   targetWidget: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
@@ -258,9 +287,8 @@ const styles = {
   middleGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' },
   blueBanner: { background: 'linear-gradient(to right, #1e4eb8, #3b82f6)', padding: '10px 18px', color: 'white', fontWeight: 'bold', fontSize: '14px', borderRadius: '4px 4px 0 0' },
   performanceFlex: { display: 'flex', justifyContent: 'space-around', padding: '25px 0' },
-  ringBox: { width: '70px', height: '70px', borderRadius: '50%', border: '5px solid', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold' },
   durationBox: { textAlign: 'center' },
-  arcWidget: { width: '85px', height: '42px', borderTop: '7px solid #3b82f6', borderLeft: '7px solid #3b82f6', borderRight: '7px solid #3b82f6', borderRadius: '100px 100px 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', fontSize: '16px', fontWeight: 'bold', paddingBottom: '3px' },
+  arcWidget: { width: '90px', height: '45px', borderTop: '10px solid #3b82f6', borderLeft: '10px solid #3b82f6', borderRight: '10px solid #3b82f6', borderRadius: '100px 100px 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', paddingBottom: '3px', color: '#102a43' },
   tinyLabel: { fontSize: '10px', fontWeight: 'bold', color: '#78909c', textTransform: 'uppercase', marginTop: '8px' },
   liveCallCard: { backgroundColor: '#1e4eb8', borderRadius: '4px', color: 'white', padding: '20px', position: 'relative' },
   liveTitleBar: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 'bold' },
