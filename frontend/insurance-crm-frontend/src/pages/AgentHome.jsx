@@ -1,15 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { fetchDashboardStats } from "../features/dashboard/dashboardSlice";
+import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { 
-  LayoutDashboard, Users, PhoneCall, CheckSquare, 
-  CircleDollarSign, BarChart3, Bell, Settings, 
-  UserCircle, Headphones, Mic, PhoneOff, ChevronDown
-} from 'lucide-react';
 
-const Dashboard = () => {
+function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { data, loading } = useSelector((state) => state.dashboard);
@@ -21,6 +17,7 @@ const Dashboard = () => {
     dispatch(fetchDashboardStats());
   }, [dispatch]);
 
+  // Sync check-in state when data arrives
   useEffect(() => {
     if (data?.is_checked_in) {
       setIsCheckedIn(true);
@@ -31,6 +28,7 @@ const Dashboard = () => {
     setCheckInLoading(true);
     try {
       const res = await api.post("agent/check-in/");
+      alert(res.data.message);
       setIsCheckedIn(true);
       dispatch(fetchDashboardStats()); 
     } catch (err) {
@@ -40,166 +38,218 @@ const Dashboard = () => {
     }
   };
 
-  if (loading || !data) {
-    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontFamily: 'sans-serif' }}>Syncing Dashboard...</div>;
-  }
+  if (loading || !data) return <div style={styles.loading}>Syncing Dashboard...</div>;
 
   return (
-    <div style={ui.page}>
-      {/* Sidebar */}
-      <aside style={ui.sidebar}>
-        <div style={ui.sidebarHeader}>
-          <div style={ui.iconCircle}><PhoneCall size={18} /></div>
-          <span style={{ fontWeight: '700', fontSize: '18px' }}>Agent Dashboard</span>
-          <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.7 }} />
-        </div>
+    <div style={styles.page}>
+      <Navbar />
+      <div style={styles.container}>
         
-        <nav style={{ marginTop: '16px' }}>
-          <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active />
-          <NavItem icon={<Users size={20}/>} label="Leads" onClick={() => navigate('/agent/leads')} />
-          <NavItem icon={<PhoneCall size={20}/>} label="Call History" />
-          <NavItem icon={<CheckSquare size={20}/>} label="Tasks" />
-          <NavItem icon={<CircleDollarSign size={20}/>} label="My Earnings" />
-          <NavItem icon={<BarChart3 size={20}/>} label="Reports" />
-        </nav>
-      </aside>
+        {/* CHECK-IN BANNER */}
+        {!isCheckedIn && (
+          <div style={styles.checkInBanner}>
+            <div style={styles.bannerText}>
+              <span style={{ marginRight: '10px' }}>🕒</span>
+              You haven't checked in for your shift yet.
+            </div>
+            <button 
+              onClick={handleCheckIn} 
+              style={styles.checkInBtn} 
+              disabled={checkInLoading}
+            >
+              {checkInLoading ? "Processing..." : "Check-in Now"}
+            </button>
+          </div>
+        )}
 
-      {/* Main Content */}
-      <main style={ui.main}>
-        <header style={ui.header}>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Welcome, {data.agent_name || 'Agent'}!</h1>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div style={ui.headerIcon}><Bell size={20} /></div>
-            <div style={ui.headerIcon}><Settings size={20} /></div>
-            <div style={ui.headerIcon}><UserCircle size={20} /></div>
+        {/* TOP WELCOME BAR */}
+        <header style={styles.header}>
+          <h1 style={styles.welcome}>Welcome, {data.agent_name || 'Agent'}!</h1>
+          <div style={styles.headerStats}>
+            <span style={{fontWeight: "bold", color: "#3b82f6"}}>Today's Effort:</span>
+            <strong>📞 Calls: {data.header_stats?.calls || 0}</strong> | 
+            <strong>💰 Sales: {data.header_stats?.sales || 0}</strong> | 
+            <strong>✅ Done Follow-ups: {data.header_stats?.followups_completed || 0}</strong>
           </div>
         </header>
 
-        <div style={{ padding: '24px' }}>
-          <div style={ui.statsBar}>
-            <span style={{ opacity: 0.8 }}>Today's Stats:</span>
-            <span>Calls Made: <strong style={{ fontSize: '18px' }}>{data.header_stats?.calls || 0}</strong></span>
-            <span style={{ color: '#cbd5e1' }}>|</span>
-            <span>Sales Closed: <strong style={{ fontSize: '18px' }}>{data.header_stats?.sales || 0}</strong></span>
-            <span style={{ color: '#cbd5e1' }}>|</span>
-            <span>Follow-ups: <strong style={{ fontSize: '18px' }}>{data.header_stats?.followups_completed || 0}</strong></span>
-          </div>
-
-          <div style={ui.kpiRow}>
-            <MetricCard title="New Leads" value={data.cards?.new_leads || 0} onClick={() => navigate(`/agent/leads`)} />
-            <MetricCard title="Pending Follow-Ups" value={data.cards?.pending_followups || 0} />
-            <MetricCard title="Today's Sales" value={`₹${data.revenue?.total_premium || 0}`} />
-            
-            <div style={ui.card}>
-              <p style={ui.cardLabel}>Monthly Target Progress</p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={ui.progressBarBase}>
-                  <div style={{ ...ui.progressBarFill, width: `${data.cards?.target_progress || 0}%` }}></div>
-                </div>
-                <div style={ui.miniGauge}>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{data.cards?.target_progress || 0}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={ui.middleRow}>
-            <div style={{ ...ui.card, gridColumn: 'span 2', padding: 0, overflow: 'hidden' }}>
-              <div style={ui.cardHeaderBlue}>Call Status</div>
-              <div style={{ display: 'flex', justifyContent: 'space-around', padding: '30px' }}>
-                <CircularDisplay label="Connected" value={data.call_metrics?.connected || 0} color="#2dd4bf" />
-                <CircularDisplay label="Missed" value={data.call_metrics?.no_answer || 0} color="#fb923c" />
-                <div style={{ textAlign: 'center' }}>
-                   <div style={ui.halfGauge}>{data.call_metrics?.avg_duration || "0m"}</div>
-                   <p style={ui.gaugeLabel}>Avg Duration</p>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ ...ui.card, backgroundColor: isCheckedIn ? '#1e4eb8' : '#334155', color: 'white' }}>
-               <div style={ui.liveStatusHeader}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isCheckedIn ? '#4ade80' : '#f87171' }}></div>
-                    {isCheckedIn ? 'Live Call' : 'Offline'}
-                  </div>
-                  <ChevronDown size={14} />
-               </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', margin: '20px 0' }}>
-                  <div style={ui.avatar}>{data.agent_name?.charAt(0)}</div>
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>{data.agent_name}</div>
-                    <div style={{ fontSize: '12px', opacity: 0.7 }}>{isCheckedIn ? '00:12' : 'Check-in required'}</div>
-                  </div>
-               </div>
-               {!isCheckedIn ? (
-                 <button onClick={handleCheckIn} style={ui.checkInBtn}>{checkInLoading ? '...' : 'START SHIFT'}</button>
-               ) : (
-                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <button style={ui.actionBtn}><Headphones size={14}/> Listen</button>
-                    <button style={ui.actionBtn}><Mic size={14}/> Whisper</button>
-                    <button style={{ ...ui.actionBtn, backgroundColor: '#ef4444' }}><PhoneOff size={14}/> End</button>
-                 </div>
-               )}
-            </div>
-          </div>
+        {/* ROW 1: KPI CARDS */}
+        <div style={styles.cardGrid}>
+          <MetricCard 
+            title="New Leads" 
+            value={data.cards?.new_leads || 0} 
+            onClick={() => navigate(`/agent/leads`, { state: { tab: 'New' } })} 
+            color="#3b82f6" 
+          />
+          <MetricCard 
+            title="Follow-Ups Due" 
+            value={data.cards?.pending_followups || 0} 
+            onClick={() => navigate(`/agent/leads`, { state: { tab: 'Follow-Up' } })} 
+            color="#f59e0b" 
+          />
+          <MetricCard title="Personal Score" value={data.cards?.personal_score || 0} color="#10b981" />
+          <MetricCard title="Target Progress" value={`${data.cards?.target_progress || 0}%`} color="#8b5cf6" />
         </div>
-      </main>
+
+        {/* MAIN DASHBOARD CONTENT */}
+        <div style={styles.mainGrid}>
+          
+          {/* CALL STATUS GAUGE */}
+          <section style={{...styles.card, gridColumn: "span 2"}}>
+            <h3 style={styles.cardTitle}>Daily Call Performance</h3>
+            <div style={styles.gaugeContainer}>
+              <Gauge label="Connected" value={data.call_metrics?.connected || 0} color="#10b981" />
+              <Gauge label="No Answer" value={data.call_metrics?.no_answer || 0} color="#ef4444" />
+              <Gauge label="Avg Duration" value={data.call_metrics?.avg_duration || "0m"} color="#3b82f6" />
+            </div>
+          </section>
+
+          {/* LIVE STATUS CARD */}
+          <section style={styles.liveCallCard}>
+            <div style={styles.liveHeader}>📡 CURRENT STATUS</div>
+            <div style={styles.liveBody}>
+              <div style={styles.avatarLarge}>{data.agent_name?.charAt(0) || 'A'}</div>
+              <div>
+                <strong>{isCheckedIn ? "Online & Active" : "Offline"}</strong>
+                <div style={{fontSize: "0.8rem", opacity: 0.8}}>
+                    {isCheckedIn ? "Ready for new leads" : "Please check in"}
+                </div>
+              </div>
+            </div>
+            <div style={styles.liveActions}>
+              <button style={styles.btnListen} onClick={() => navigate('/agent/leads')}>View All Leads</button>
+            </div>
+          </section>
+
+          {/* RECENT ACTIVITY */}
+          <section style={styles.card}>
+            <h3 style={styles.cardTitle}>Recent Conversions</h3>
+            {(data.recent_conversions || []).map((l, i) => (
+              <div key={i} style={styles.listRow}>
+                <span>{l.name}</span>
+                <span style={getStatusBadge('converted')}>PAID</span>
+              </div>
+            ))}
+          </section>
+
+          {/* 🔥 PRIORITY SAVES */}
+          <section style={styles.atRiskCard}>
+            <div style={styles.cardHeader}>
+              <h3 style={styles.atRiskTitle}>🔥 Priority Saves</h3>
+              <p style={styles.atRiskSubtitle}>Scheduled calls due very soon</p>
+            </div>
+
+            <div style={styles.atRiskList}>
+              {data.at_risk_leads && data.at_risk_leads.length > 0 ? (
+                data.at_risk_leads.map((lead) => (
+                  <div key={lead.id} style={styles.atRiskRow}>
+                    <div style={styles.leadMain}>
+                      <div style={styles.atRiskName}>{lead.name}</div>
+                      <div style={styles.atRiskPhone}>{lead.phone}</div>
+                    </div>
+                    
+                    <div style={styles.timerContainer}>
+                      <span style={{
+                          ...styles.timerText, 
+                          color: lead.is_overdue ? '#ef4444' : '#f59e0b'
+                      }}>
+                        {lead.is_overdue ? "OVERDUE" : `Due in ${lead.minutes_left}m`}
+                      </span>
+                    </div>
+
+                    <button 
+                      style={styles.saveBtn}
+                      onClick={() => navigate(`/lead/${lead.id}`)}
+                    >
+                      Open
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div style={styles.emptyState}>
+                  ✅ All scheduled calls are up to date!
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* REVENUE OVERVIEW */}
+          <section style={styles.card}>
+            <h3 style={styles.cardTitle}>Earnings Summary</h3>
+            <div style={styles.earningItem}>Total Premium: <strong>₹ {data.revenue?.total_premium || 0}</strong></div>
+            <div style={styles.earningItem}>Pending Collection: <strong style={{color: '#f59e0b'}}>₹ {data.revenue?.pending_amount || 0}</strong></div>
+          </section>
+
+        </div>
+      </div>
     </div>
   );
-};
+}
 
-// --- Helper Components ---
-const NavItem = ({ icon, label, active, onClick }) => (
-  <div onClick={onClick} style={{
-    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', cursor: 'pointer',
-    backgroundColor: active ? '#1e4eb8' : 'transparent', color: active ? 'white' : '#64748b',
-    borderLeft: active ? '4px solid #93c5fd' : '4px solid transparent', fontWeight: '600', fontSize: '14px'
-  }}>
-    {icon} <span>{label}</span>
+// --- SUB-COMPONENTS ---
+const MetricCard = ({ title, value, color, onClick }) => (
+  <div 
+    style={{
+        ...styles.metricCard, 
+        cursor: onClick ? 'pointer' : 'default',
+    }} 
+    onClick={onClick}
+  >
+    <div style={{...styles.indicator, backgroundColor: color}} />
+    <div style={{color: "#64748b", fontSize: "0.8rem", fontWeight: "600"}}>{title}</div>
+    <div style={{fontSize: "1.6rem", fontWeight: "800", marginTop: "5px"}}>{value}</div>
   </div>
 );
 
-const MetricCard = ({ title, value, onClick }) => (
-  <div onClick={onClick} style={{ ...ui.card, cursor: onClick ? 'pointer' : 'default' }}>
-    <p style={ui.cardLabel}>{title}</p>
-    <p style={{ fontSize: '28px', fontWeight: '800', margin: 0, color: '#1e293b' }}>{value}</p>
+const Gauge = ({ label, value, color }) => (
+  <div style={{textAlign: "center"}}>
+    <div style={{...styles.gauge, borderColor: color}}>{value}</div>
+    <div style={{fontSize: "0.7rem", color: "#64748b", marginTop: "8px"}}>{label}</div>
   </div>
 );
 
-const CircularDisplay = ({ label, value, color }) => (
-  <div style={{ textAlign: 'center' }}>
-    <div style={{ 
-      width: '70px', height: '70px', borderRadius: '50%', border: `5px solid ${color}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '800'
-    }}>{value}</div>
-    <p style={ui.gaugeLabel}>{label}</p>
-  </div>
-);
+const getStatusBadge = (status) => ({
+    fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold',
+    backgroundColor: status === 'converted' ? '#dcfce7' : '#f1f5f9',
+    color: status === 'converted' ? '#166534' : '#475569'
+});
 
-// --- Stylesheet Object ---
-const ui = {
-  page: { display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4f8', fontFamily: 'Inter, system-ui, sans-serif' },
-  sidebar: { width: '260px', backgroundColor: 'white', borderRight: '1px solid #e2e8f0' },
-  sidebarHeader: { padding: '16px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#1e4eb8', color: 'white' },
-  iconCircle: { width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  main: { flex: 1, overflowY: 'auto' },
-  header: { backgroundColor: '#1e4eb8', color: 'white', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  headerIcon: { padding: '8px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', cursor: 'pointer' },
-  statsBar: { display: 'flex', gap: '24px', marginBottom: '24px', fontSize: '13px', color: '#475569', alignItems: 'center' },
-  kpiRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' },
-  card: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
-  cardLabel: { fontSize: '10px', fontWeight: '700', color: '#1e4eb8', textTransform: 'uppercase', marginBottom: '8px', margin: 0 },
-  progressBarBase: { width: '100px', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '10px' },
-  progressBarFill: { height: '100%', backgroundColor: '#14b8a6', borderRadius: '10px' },
-  miniGauge: { width: '45px', height: '45px', borderRadius: '50%', border: '4px solid #22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  middleRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
-  cardHeaderBlue: { background: 'linear-gradient(to right, #1d4ed8, #3b82f6)', padding: '12px', color: 'white', fontWeight: 'bold', fontSize: '14px' },
-  gaugeLabel: { fontSize: '10px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginTop: '8px' },
-  halfGauge: { width: '90px', height: '45px', borderTop: '8px solid #3b82f6', borderLeft: '8px solid #3b82f6', borderRight: '8px solid #3b82f6', borderRadius: '100px 100px 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', paddingBottom: '5px' },
-  liveStatusHeader: { display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' },
-  avatar: { width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', border: '2px solid rgba(255,255,255,0.3)' },
-  checkInBtn: { width: '100%', padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: '#f97316', color: 'white', fontWeight: 'bold', cursor: 'pointer' },
-  actionBtn: { flex: 1, padding: '8px', borderRadius: '6px', border: 'none', backgroundColor: '#10b981', color: 'white', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }
+const styles = {
+  page: { backgroundColor: "#f1f5f9", minHeight: "100vh", paddingTop: "80px", fontFamily: "'Inter', sans-serif" },
+  container: { maxWidth: "1300px", margin: "0 auto", padding: "20px" },
+  checkInBanner: { backgroundColor: "#fffbeb", border: "1px solid #fef3c7", padding: "15px 25px", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" },
+  bannerText: { color: "#92400e", fontWeight: "600", fontSize: "0.95rem" },
+  checkInBtn: { backgroundColor: "#d97706", color: "white", border: "none", padding: "8px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" },
+  header: { marginBottom: "20px" },
+  welcome: { fontSize: "1.6rem", fontWeight: "800", color: "#0f172a" },
+  headerStats: { display: "flex", gap: "15px", fontSize: "0.8rem", color: "#475569", marginTop: "10px", backgroundColor: "white", padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0" },
+  cardGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "25px" },
+  metricCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", position: "absolute", border: "1px solid #e2e8f0", transition: "transform 0.2s", ":hover": { transform: "translateY(-2px)" } },
+  metricCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", position: "relative", overflow: "hidden", border: "1px solid #e2e8f0" },
+  indicator: { position: "absolute", top: 0, left: 0, width: "100%", height: "4px" },
+  mainGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" },
+  card: { backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" },
+  cardTitle: { fontSize: "0.9rem", fontWeight: "700", marginBottom: "15px", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" },
+  atRiskCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #fee2e2", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" },
+  atRiskTitle: { margin: 0, fontSize: "0.9rem", fontWeight: "800", color: "#b91c1c" },
+  atRiskSubtitle: { margin: "2px 0 15px 0", fontSize: "0.75rem", color: "#94a3b8" },
+  atRiskRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f8fafc" },
+  atRiskName: { fontSize: "0.85rem", fontWeight: "700", color: "#1e293b" },
+  atRiskPhone: { fontSize: "0.7rem", color: "#64748b" },
+  timerText: { fontSize: "0.8rem", fontWeight: "800" },
+  saveBtn: { backgroundColor: "#1e293b", color: "white", border: "none", padding: "5px 12px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "600", cursor: "pointer" },
+  emptyState: { padding: "30px", textAlign: "center", color: "#10b981", fontSize: "0.8rem", fontWeight: "600" },
+  gaugeContainer: { display: "flex", justifyContent: "space-around" },
+  gauge: { width: "65px", height: "65px", borderRadius: "50%", border: "5px solid", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.95rem" },
+  liveCallCard: { backgroundColor: "#1e3a8a", color: "white", padding: "20px", borderRadius: "12px" },
+  liveHeader: { fontSize: "0.75rem", fontWeight: "bold", marginBottom: "20px", opacity: 0.8 },
+  liveBody: { display: "flex", gap: "15px", alignItems: "center", marginBottom: "25px" },
+  avatarLarge: { width: "45px", height: "45px", borderRadius: "50%", backgroundColor: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "1.2rem" },
+  liveActions: { display: "flex", gap: "10px" },
+  btnListen: { flex: 1, padding: "10px", border: "none", borderRadius: "6px", backgroundColor: "#10b981", color: "white", fontWeight: "bold", cursor: "pointer" },
+  listRow: { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f8fafc", fontSize: "0.85rem" },
+  earningItem: { padding: "8px 0", fontSize: "0.9rem" },
+  loading: { textAlign: "center", marginTop: "100px", color: "#64748b" }
 };
 
 export default Dashboard;
