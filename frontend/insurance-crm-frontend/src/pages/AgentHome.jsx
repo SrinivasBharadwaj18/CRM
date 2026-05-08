@@ -4,34 +4,45 @@ import { useNavigate } from "react-router-dom";
 import { fetchDashboardStats } from "../features/dashboard/dashboardSlice";
 import api from "../services/api";
 import { 
-  PhoneCall, 
-  CircleDollarSign, 
-  Bell, 
-  Settings, 
-  UserCircle, 
-  Headphones, 
-  Mic, 
-  PhoneOff, 
-  ChevronDown 
+  PhoneCall, CircleDollarSign, Bell, Settings, 
+  UserCircle, Headphones, Mic, PhoneOff, ChevronDown 
 } from 'lucide-react';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { data, loading } = useSelector((state) => state.dashboard);
+  const { data: stats, loading: statsLoading } = useSelector((state) => state.dashboard);
   
+  // State for data from the specific views you shared
+  const [leads, setLeads] = useState([]);
+  const [tasksData, setTasksData] = useState({ results: [] });
+  const [earningsData, setEarningsData] = useState(null);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
+    loadIntegratedData();
   }, [dispatch]);
 
-  useEffect(() => {
-    if (data?.is_checked_in) {
-      setIsCheckedIn(true);
+  const loadIntegratedData = async () => {
+    try {
+      const [leadsRes, tasksRes, earningsRes] = await Promise.all([
+        api.get("agent/leads/"),           // From agent_leads view
+        api.get("agent/tasks/?limit=4"),   // From agent_tasks_list (paginated)
+        api.get("agent/earnings-dashboard/") // From AgentEarningsDashboardView
+      ]);
+      setLeads(leadsRes.data);
+      setTasksData(tasksRes.data);
+      setEarningsData(earningsRes.data);
+    } catch (err) {
+      console.error("Failed to sync dashboard data:", err);
     }
-  }, [data?.is_checked_in]);
+  };
+
+  useEffect(() => {
+    if (stats?.is_checked_in) setIsCheckedIn(true);
+  }, [stats?.is_checked_in]);
 
   const handleCheckIn = async () => {
     setCheckInLoading(true);
@@ -40,19 +51,19 @@ const Dashboard = () => {
       setIsCheckedIn(true);
       dispatch(fetchDashboardStats()); 
     } catch (err) {
-      alert(err.response?.data?.message || "Check-in failed");
+      alert("Check-in failed");
     } finally {
       setCheckInLoading(false);
     }
   };
 
-  if (loading || !data) return <div style={styles.loading}>Syncing Dashboard...</div>;
+  if (statsLoading || !stats) return <div style={styles.loading}>Syncing Dashboard...</div>;
 
   return (
     <div style={styles.dashboardWrapper}>
-      {/* Top Header - Exact match to image_19f1e1.jpg */}
+      {/* Header */}
       <header style={styles.header}>
-        <h1 style={styles.welcomeText}>Welcome, {data.agent_name || 'Sarah'}!</h1>
+        <h1 style={styles.welcomeText}>Welcome, {stats.agent_name || 'Agent'}!</h1>
         <div style={styles.headerIcons}>
           <div style={styles.headerCircle}><Bell size={20} /></div>
           <div style={styles.headerCircle}><Settings size={20} /></div>
@@ -61,50 +72,49 @@ const Dashboard = () => {
       </header>
 
       <div style={styles.contentBody}>
-        {/* Statistics Bar */}
+        {/* Top Stats Bar */}
         <div style={styles.topStatsRow}>
           <span style={{ color: '#64748b' }}>Today's Stats:</span>
-          <span style={styles.statItem}>Calls Made: <b style={styles.statVal}>{data.header_stats?.calls || 25}</b></span>
+          <span style={styles.statItem}>Calls: <b style={styles.statVal}>{stats.header_stats?.calls || 0}</b></span>
           <span style={styles.pipe}>|</span>
-          <span style={styles.statItem}>Sales Closed: <b style={styles.statVal}>{data.header_stats?.sales || 4}</b></span>
+          <span style={styles.statItem}>Sales: <b style={styles.statVal}>{stats.header_stats?.sales || 0}</b></span>
           <span style={styles.pipe}>|</span>
-          <span style={styles.statItem}>Follow-ups: <b style={styles.statVal}>{data.header_stats?.followups_completed || 6}</b></span>
+          <span style={styles.statItem}>Follow-ups: <b style={styles.statVal}>{stats.header_stats?.followups_completed || 0}</b></span>
         </div>
 
         {/* Row 1: KPI Cards */}
         <div style={styles.kpiGrid}>
-          <MetricCard title="New Leads" value={data.cards?.new_leads || "12"} />
-          <MetricCard title="Pending Follow-Ups" value={data.cards?.pending_followups || "8"} />
-          <MetricCard title="Today's Sales" value={`₹${data.revenue?.total_premium || "35,000"}`} />
-          
+          <MetricCard title="New Leads" value={stats.cards?.new_leads || 0} />
+          <MetricCard title="Pending Follow-Ups" value={stats.cards?.pending_followups || 0} />
+          <MetricCard title="Today's Sales" value={`₹${stats.revenue?.total_premium || 0}`} />
           <div style={styles.card}>
             <div style={styles.targetWidget}>
               <div>
-                <p style={styles.cardLabel}>Monthly Target Progress</p>
+                <p style={styles.cardLabel}>Target Progress</p>
                 <div style={styles.progressBase}>
-                  <div style={{ ...styles.progressFill, width: `${data.cards?.target_progress || 60}%` }} />
+                  <div style={{ ...styles.progressFill, width: `${stats.cards?.target_progress || 0}%` }} />
                 </div>
               </div>
               <div style={styles.progressRing}>
-                <span style={styles.ringText}>{data.cards?.target_progress || 60}%</span>
+                <span style={styles.ringText}>{stats.cards?.target_progress || 0}%</span>
                 <svg width="56" height="56" viewBox="0 0 36 36">
-                  <path fill="none" stroke="#f1f5f9" strokeWidth="3.5" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path fill="none" stroke="#22c55e" strokeWidth="3.5" strokeDasharray={`${data.cards?.target_progress || 60}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path fill="none" stroke="#f1f5f9" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path fill="none" stroke="#22c55e" strokeWidth="3" strokeDasharray={`${stats.cards?.target_progress || 0}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 </svg>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Row 2: Call Performance & Live Call Controls */}
+        {/* Row 2: Call Performance & Live Call Interaction */}
         <div style={styles.middleGrid}>
           <div style={{ ...styles.card, gridColumn: 'span 2', padding: 0, overflow: 'hidden' }}>
             <div style={styles.blueBanner}>Call Status</div>
             <div style={styles.performanceFlex}>
-              <RingDisplay label="Connected Calls" value={data.call_metrics?.connected || 18} color="#2dd4bf" />
-              <RingDisplay label="Missed Calls" value={data.call_metrics?.no_answer || 5} color="#fb923c" />
+              <RingDisplay label="Connected" value={stats.call_metrics?.connected || 0} color="#2dd4bf" />
+              <RingDisplay label="Missed" value={stats.call_metrics?.no_answer || 0} color="#fb923c" />
               <div style={styles.durationBox}>
-                <div style={styles.arcWidget}>{data.call_metrics?.avg_duration || "3m 15s"}</div>
+                <div style={styles.arcWidget}>{stats.call_metrics?.avg_duration || "0m"}</div>
                 <p style={styles.tinyLabel}>Avg Call Duration</p>
               </div>
             </div>
@@ -113,83 +123,79 @@ const Dashboard = () => {
           <div style={styles.liveCallCard}>
              <div style={styles.liveTitleBar}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={styles.redDot} /> Live Call</div>
-                <div style={styles.metaFlex}><Settings size={14} /><ChevronDown size={14} /></div>
+                <ChevronDown size={14} />
              </div>
              <div style={styles.callerProfile}>
-                <div style={styles.avatarWrap}>
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Rajesh" alt="avatar" style={{ width: '100%' }} />
-                </div>
+                <div style={styles.avatarWrap}>{stats.agent_name?.charAt(0)}</div>
                 <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '15px' }}>Rajesh Kumar</div>
-                  <div style={{ fontSize: '12px', opacity: 0.8 }}>00:12</div>
+                  <div style={{ fontWeight: 'bold' }}>{stats.agent_name}</div>
+                  <div style={{ fontSize: '12px', opacity: 0.8 }}>{isCheckedIn ? "Ready" : "Offline"}</div>
                 </div>
              </div>
              <div style={styles.btnRow}>
                 <button style={styles.greenBtn}><Headphones size={14}/> Listen</button>
-                <button style={styles.tealBtn}><Mic size={14}/> Whisper</button>
-                <button style={styles.redBtn}><PhoneOff size={14}/> End Call</button>
+                <button style={styles.redBtn}><PhoneOff size={14}/> End</button>
              </div>
              {!isCheckedIn && (
                <button onClick={handleCheckIn} style={styles.checkInMask}>
-                 {checkInLoading ? 'Syncing...' : 'Check-in to Start Session'}
+                 {checkInLoading ? '...' : 'Check-in to Start'}
                </button>
              )}
           </div>
         </div>
 
-        {/* Row 3: Bottom Grids */}
+        {/* Row 3: Live Lists from the Backend Views */}
         <div style={styles.bottomGrid}>
+          {/* Table populated from agent_leads view */}
           <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
-            <div style={styles.widgetHeader}>
-              <span>Lead List</span>
-              <div style={styles.metaFlex}><Settings size={14}/><ChevronDown size={14}/></div>
-            </div>
+            <div style={styles.widgetHeader}><span>Lead List</span><Settings size={14}/></div>
             <table style={styles.table}>
-              <thead style={styles.thead}>
-                <tr><th>Name</th><th>Contact</th><th>Status</th><th>Action</th></tr>
-              </thead>
-              <tbody style={styles.tbody}>
-                <LeadRow name="Anil Verma" phone="9876543210" status="New" color="#22c55e" />
-                <LeadRow name="Priya Shah" phone="9856231470" status="Follow-Up" color="#fb923c" />
-                <LeadRow name="Shakh Tagiar" phone="9856231470" status="New" color="#22c55e" />
+              <thead style={styles.thead}><tr><th>Name</th><th>Phone</th><th>Status</th></tr></thead>
+              <tbody>
+                {leads.slice(0, 3).map((l) => (
+                  <tr key={l.id} style={styles.rowBorder}>
+                    <td style={styles.tdStrong}>{l.name}</td>
+                    <td style={styles.tdDim}>{l.phone}</td>
+                    <td style={styles.td}><span style={{ ...styles.pill, backgroundColor: l.priority === 'hot' ? '#ef4444' : '#fb923c' }}>{l.status}</span></td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
 
+          {/* Tasks from agent_tasks_list view */}
           <div style={styles.stack}>
             <div style={styles.card}>
-              <div style={styles.widgetHeader}>
-                <span>Follow-Ups & Tasks</span>
-                <div style={styles.metaFlex}><Settings size={14}/><ChevronDown size={14}/></div>
-              </div>
+              <div style={styles.widgetHeader}><span>Follow-Ups & Tasks</span><Settings size={14}/></div>
               <div style={styles.listContainer}>
-                 <TaskItem checked text="Follow Up with Pooja Tomorrow" />
-                 <TaskItem checked text="Send Policy Info to Mr. Singh" />
-                 <TaskItem text="Prepare Report for TL" />
-                 <TaskItem text="Email Confirmation to Client" />
+                 {tasksData.results?.map(t => (
+                   <TaskItem key={t.id} checked={t.is_completed} text={t.title} />
+                 ))}
               </div>
             </div>
             <div style={styles.card}>
               <span style={styles.sectionTitle}>Script & Notes</span>
-              <p style={styles.scriptNote}><b>Intro:</b> "Hello, this is Sarah from XYZ Insurance..."</p>
-              <p style={styles.scriptNote}><b>Notes:</b> Interested in term plan, call back at 5 PM.</p>
+              <p style={styles.scriptNote}><b>Current Focus:</b> Follow up on pending health insurance renewals.</p>
+              <p style={styles.scriptNote}><b>Lead Note:</b> {leads[0]?.last_note || "No notes for active leads."}</p>
             </div>
           </div>
 
+          {/* Earnings from AgentEarningsDashboardView */}
           <div style={styles.stack}>
             <div style={styles.card}>
               <span style={styles.sectionTitle}>Performance Overview</span>
-              <div style={styles.timeLabel}>Today</div>
-              <div style={styles.splitRow}><span>Sales: <b>₹35,000</b></span> <span>Calls: <b>25</b></span></div>
-              <div style={styles.underlinedRow}><span>Conversion: <b>16%</b></span></div>
-              <div style={{ ...styles.timeLabel, marginTop: '10px' }}>This Month</div>
-              <div style={styles.splitRow}><span>Sales: <b>₹1,20,000</b></span> <span>Conversion: <b>22%</b></span></div>
+              <div style={styles.splitRow}><span>Target Month:</span> <b>{earningsData?.summary.month_display}</b></div>
+              <div style={styles.splitRow}><span>Today Sales:</span> <b>₹{stats.revenue?.total_premium || 0}</b></div>
+              <div style={styles.underlinedRow}><span>Conv Rate:</span> <b>{stats.cards?.target_progress || 0}%</b></div>
             </div>
             <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
-              <div style={styles.earningsHeader}><CircleDollarSign size={14}/> My Earnings <ChevronDown size={12} style={{ marginLeft: 'auto' }}/></div>
+              <div style={styles.earningsHeader}><CircleDollarSign size={14}/> {earningsData?.summary.month_display} Earnings</div>
               <div style={{ padding: '15px' }}>
-                 <div style={styles.splitRow}><span>Commission :</span> <b>₹12,500</b></div>
-                 <div style={styles.splitRow}><span>Bonuses :</span> <b>₹3,000</b></div>
+                 <div style={styles.splitRow}><span>Base Salary :</span> <b>₹{earningsData?.summary.base_salary || 0}</b></div>
+                 <div style={styles.splitRow}><span>Total Incentives :</span> <b>₹{earningsData?.summary.total_incentives || 0}</b></div>
+                 <div style={{ ...styles.splitRow, borderTop: '1px solid #f1f5f9', paddingTop: '8px', marginTop: '8px' }}>
+                   <span><b>Total Payable :</b></span> <b>₹{earningsData?.summary.total_earnings || 0}</b>
+                 </div>
               </div>
             </div>
           </div>
@@ -199,7 +205,7 @@ const Dashboard = () => {
   );
 };
 
-// Reusable Atomic Components
+// Internal Components
 const MetricCard = ({ title, value }) => (
   <div style={styles.card}>
     <p style={styles.cardLabel}>{title}</p>
@@ -214,26 +220,16 @@ const RingDisplay = ({ label, value, color }) => (
   </div>
 );
 
-const LeadRow = ({ name, phone, status, color }) => (
-  <tr style={styles.rowBorder}>
-    <td style={styles.tdStrong}>{name}</td>
-    <td style={styles.tdDim}>{phone}</td>
-    <td style={styles.td}><span style={{ ...styles.pill, backgroundColor: color }}>{status}</span></td>
-    <td style={styles.td}><button style={styles.callBtn}><PhoneCall size={10}/> Call</button></td>
-  </tr>
-);
-
 const TaskItem = ({ checked, text }) => (
   <div style={styles.taskLine}>
-    <div style={{ ...styles.checkCircle, ...(checked ? styles.checkOn : {}) }}>
-      {checked && <div style={styles.dot} />}
-    </div>
-    <span style={{ color: checked ? '#1e293b' : '#94a3b8' }}>{text}</span>
+    <div style={{ ...styles.checkCircle, ...(checked ? styles.checkOn : {}) }}>{checked && <div style={styles.dot} />}</div>
+    <span style={{ fontSize: '12px', color: checked ? '#1e293b' : '#94a3b8' }}>{text}</span>
   </div>
 );
 
+// CSS Object to mimic image_19f1e1.jpg
 const styles = {
-  dashboardWrapper: { display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh' },
+  dashboardWrapper: { display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', backgroundColor: '#f0f4f8' },
   header: { backgroundColor: '#1e4eb8', color: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   welcomeText: { margin: 0, fontSize: '22px', fontWeight: '700' },
   headerIcons: { display: 'flex', gap: '12px' },
@@ -248,10 +244,10 @@ const styles = {
   cardLabel: { fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px', marginTop: 0 },
   bigNum: { fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#1e293b' },
   targetWidget: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  progressBase: { width: '120px', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '10px' },
+  progressBase: { width: '100px', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '10px' },
   progressFill: { height: '100%', backgroundColor: '#14b8a6', borderRadius: '10px' },
   progressRing: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  ringText: { position: 'absolute', fontSize: '12px', fontWeight: 'bold' },
+  ringText: { position: 'absolute', fontSize: '10px', fontWeight: 'bold' },
   middleGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '25px' },
   blueBanner: { background: 'linear-gradient(to right, #1e4eb8, #3b82f6)', padding: '12px 20px', color: 'white', fontWeight: 'bold', fontSize: '14px' },
   performanceFlex: { display: 'flex', justifyContent: 'space-around', padding: '25px 0' },
@@ -259,15 +255,14 @@ const styles = {
   durationBox: { textAlign: 'center' },
   arcWidget: { width: '90px', height: '45px', borderTop: '8px solid #3b82f6', borderLeft: '8px solid #3b82f6', borderRight: '8px solid #3b82f6', borderRadius: '100px 100px 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold', paddingBottom: '4px' },
   tinyLabel: { fontSize: '10px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', marginTop: '10px' },
-  liveCallCard: { backgroundColor: '#1e4eb8', borderRadius: '12px', color: 'white', padding: '20px', position: 'relative', boxShadow: '0 8px 15px rgba(30,78,184,0.15)' },
+  liveCallCard: { backgroundColor: '#1e4eb8', borderRadius: '12px', color: 'white', padding: '20px', position: 'relative' },
   liveTitleBar: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 'bold' },
-  redDot: { width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%', boxShadow: '0 0 5px #ef4444' },
+  redDot: { width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' },
   callerProfile: { display: 'flex', gap: '15px', alignItems: 'center', margin: '20px 0' },
-  avatarWrap: { width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', border: '2px solid white' },
+  avatarWrap: { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
   btnRow: { display: 'flex', gap: '8px' },
-  greenBtn: { flex: 1, padding: '8px', border: 'none', backgroundColor: '#22c55e', color: 'white', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' },
-  tealBtn: { flex: 1, padding: '8px', border: 'none', backgroundColor: '#14b8a6', color: 'white', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' },
-  redBtn: { flex: 1, padding: '8px', border: 'none', backgroundColor: '#ef4444', color: 'white', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' },
+  greenBtn: { flex: 1, padding: '8px', border: 'none', backgroundColor: '#22c55e', color: 'white', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold' },
+  redBtn: { flex: 1, padding: '8px', border: 'none', backgroundColor: '#ef4444', color: 'white', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold' },
   checkInMask: { position: 'absolute', inset: 0, backgroundColor: 'rgba(30,78,184,0.96)', borderRadius: '12px', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer' },
   bottomGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' },
   widgetHeader: { display: 'flex', justifyContent: 'space-between', padding: '12px 15px', borderBottom: '1px solid #f1f5f9', fontWeight: 'bold', color: '#1e4eb8', fontSize: '13px' },
@@ -278,19 +273,16 @@ const styles = {
   tdDim: { padding: '12px', color: '#64748b' },
   td: { padding: '12px' },
   pill: { padding: '2px 8px', borderRadius: '4px', color: 'white', fontSize: '10px', fontWeight: 'bold' },
-  callBtn: { backgroundColor: '#1e4eb8', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px' },
   stack: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  taskLine: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', marginBottom: '12px' },
-  checkCircle: { width: '16px', height: '16px', border: '1px solid #cbd5e1', borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  taskLine: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' },
+  checkCircle: { width: '14px', height: '14px', border: '1px solid #cbd5e1', borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   checkOn: { backgroundColor: '#14b8a6', borderColor: '#14b8a6' },
   dot: { width: '4px', height: '4px', backgroundColor: 'white', borderRadius: '50%' },
   sectionTitle: { fontWeight: 'bold', color: '#1e4eb8', fontSize: '13px', display: 'block', marginBottom: '10px' },
-  scriptNote: { fontSize: '12px', color: '#64748b', margin: '5px 0' },
-  timeLabel: { fontWeight: 'bold', fontSize: '12px', marginBottom: '5px' },
+  scriptNote: { fontSize: '11px', color: '#64748b', margin: '5px 0' },
   splitRow: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', margin: '4px 0' },
   underlinedRow: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' },
-  earningsHeader: { backgroundColor: '#1e4eb8', padding: '10px 15px', color: 'white', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold' },
-  metaFlex: { display: 'flex', gap: '8px', color: '#94a3b8' },
+  earningsHeader: { backgroundColor: '#1e4eb8', padding: '10px 15px', color: 'white', fontSize: '11px', fontWeight: 'bold' },
   loading: { textAlign: 'center', padding: '100px', color: '#64748b' }
 };
 
