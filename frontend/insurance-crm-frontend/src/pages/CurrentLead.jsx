@@ -290,15 +290,67 @@
 
 // export default CurrentLead;
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from "../services/api"; // Your existing API service
 import { 
   CheckCircle, ChevronLeft, Phone, Mail, MapPin, 
   Edit2, Plus, Info, LifeBuoy, RefreshCcw, FileText, 
-  Briefcase, History, MessageSquare, Calendar
+  Briefcase, History, MessageSquare, Calendar, X
 } from 'lucide-react';
 
 const CurrentLead = () => {
-  // Brand Colors from image_01e24f.jpg
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  // State Management
+  const [lead, setLead] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isClosing, setIsClosing] = useState(false);
+  const [closeReason, setCloseReason] = useState("");
+
+  // Fetch Lead Data on Mount
+  useEffect(() => {
+    const fetchLeadData = async () => {
+      try {
+        const res = await api.get(`leads/${id}/`); 
+        setLead(res.data);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLeadData();
+  }, [id]);
+
+  // Action Handlers
+  const handleMarkAsPaid = async () => {
+    try {
+      await api.post(`agent/${id}/mark-paid/`);
+      const res = await api.get(`leads/${id}/`);
+      setLead(res.data);
+    } catch (err) {
+      alert("Failed to update payment status.");
+    }
+  };
+
+  const handleCloseLead = async () => {
+    if (!closeReason.trim()) return alert("Please provide a reason.");
+    try {
+      await api.post(`agent/${id}/close/`, { reason: closeReason });
+      navigate("/agent/leads");
+    } catch (err) {
+      alert("Error: Could not close the lead.");
+    }
+  };
+
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading Customer Data...</div>;
+  if (!lead) return <div style={{ padding: '40px', textAlign: 'center' }}>Customer not found.</div>;
+
+  const isConverted = lead.status === 'converted';
+  const isPaid = lead.payment_status === 'paid';
+
   const colors = {
     mainBg: '#F8FAFC',
     primaryBlue: '#0052CC',
@@ -322,170 +374,111 @@ const CurrentLead = () => {
       {/* Header Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: colors.primaryBlue, fontSize: '12px', fontWeight: '600', marginBottom: '4px', cursor: 'pointer' }}>
+          <div onClick={() => navigate("/agent/leads")} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: colors.primaryBlue, fontSize: '12px', fontWeight: '600', marginBottom: '4px', cursor: 'pointer' }}>
             <ChevronLeft size={14}/> Back to Leads
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0 }}>Customer 360</h1>
-          <p style={{ fontSize: '12px', color: colors.textMuted }}>Complete view of customer and all interactions</p>
+          <p style={{ fontSize: '12px', color: colors.textMuted }}>Details for {lead.name}</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button style={{ ...s.btnAction, border: '1px solid #16A34A', color: '#16A34A' }}><Phone size={14}/> Call</button>
-          <button style={{ ...s.btnAction, border: '1px solid #16A34A', color: '#16A34A' }}><MessageSquare size={14}/> WhatsApp</button>
+          {!isPaid && (
+             <button onClick={() => setIsClosing(true)} style={{ ...s.btnAction, border: '1px solid #DC2626', color: '#DC2626' }}><X size={14}/> Close Lead</button>
+          )}
           <button style={{ ...s.btnAction, border: `1px solid ${colors.border}` }}>More Actions ▾</button>
         </div>
       </div>
 
+      {/* Closing Form Modal Overlay Logic */}
+      {isClosing && (
+        <div style={s.card}>
+          <h4 style={{ color: '#991B1B', margin: '0 0 10px 0' }}>Reason for Closing</h4>
+          <textarea 
+            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #FECACA' }}
+            value={closeReason}
+            onChange={(e) => setCloseReason(e.target.value)}
+            placeholder="Why is this customer not interested?"
+          />
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button onClick={handleCloseLead} style={{ ...s.btnAction, backgroundColor: '#E11D48', color: '#FFF', border: 'none' }}>Confirm Close</button>
+            <button onClick={() => setIsClosing(false)} style={s.btnAction}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: '20px' }}>
-        {/* Main Data Column */}
         <div style={{ flex: 1 }}>
-          {/* Profile Card */}
+          {/* Profile Card using lead data */}
           <div style={{ ...s.card, display: 'flex', gap: '30px' }}>
             <div style={{ textAlign: 'center' }}>
-              <img src="https://ui-avatars.com/api/?name=Amit+Verma&background=E2E8F0" style={{ width: '90px', borderRadius: '50%', border: '4px solid #F1F5F9', marginBottom: '12px' }} alt="Amit" />
-              <span style={{ ...s.badge, backgroundColor: '#FFF7ED', color: '#C2410C' }}>Hot Lead</span>
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', backgroundColor: colors.primaryBlue, color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 'bold', margin: '0 auto 12px' }}>
+                {lead.name.charAt(0)}
+              </div>
+              <span style={{ ...s.badge, backgroundColor: '#FFF7ED', color: '#C2410C' }}>{lead.status}</span>
             </div>
             <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  Amit Verma <CheckCircle size={16} fill={colors.success} color="#FFF" />
+                  {lead.name} {isPaid && <CheckCircle size={16} fill={colors.success} color="#FFF" />}
                 </h2>
                 <div style={{ fontSize: '13px', color: colors.textMuted, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <span style={{ display: 'flex', gap: '8px' }}><Phone size={14}/> +91 98765 43210</span>
-                  <span style={{ display: 'flex', gap: '8px' }}><Mail size={14}/> amit.verma@gmail.com</span>
-                  <span style={{ display: 'flex', gap: '8px' }}><MapPin size={14}/> Gurugram, Haryana - 122002</span>
+                  <span style={{ display: 'flex', gap: '8px' }}><Phone size={14}/> {lead.phone}</span>
+                  <span style={{ display: 'flex', gap: '8px' }}><Mail size={14}/> {lead.email || "No Email"}</span>
+                  <span style={{ display: 'flex', gap: '8px' }}><MapPin size={14}/> {lead.insurance_type}</span>
                 </div>
               </div>
-              <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <DataRow label="Lead ID" val="LID2405311256" />
-                <DataRow label="Lead Source" val="Website" />
-                <DataRow label="Assigned On" val="31 May 2024" />
-                <DataRow label="Assigned To" val="Rohit Sharma" />
-              </div>
-              <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <DataRow label="Date of Birth" val="15 Aug 1988 (35 Yrs)" />
-                <DataRow label="Occupation" val="Salaried" />
-                <DataRow label="Annual Income" val="₹ 12 - 15 Lakhs" />
-                <DataRow label="Marital Status" val="Married" />
+              <div style={{ borderLeft: `1px solid ${colors.border}`, paddingLeft: '20px', fontSize: '12px' }}>
+                <DataRow label="Lead ID" val={lead.id} />
+                <DataRow label="Payment" val={isPaid ? "Paid" : "Pending"} />
+                <DataRow label="Converted" val={isConverted ? "Yes" : "No"} />
               </div>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '24px', borderBottom: `1px solid ${colors.border}`, marginBottom: '20px' }}>
-            {['Overview', 'Policies (2)', 'Proposals (1)', 'Interactions', 'Followups (3)', 'Documents', 'Notes', 'Timeline'].map((tab, i) => (
-              <div key={tab} style={{ 
-                padding: '10px 0', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
-                color: i === 0 ? colors.primaryBlue : colors.textMuted,
-                borderBottom: i === 0 ? `2px solid ${colors.primaryBlue}` : '2px solid transparent'
-              }}>{tab}</div>
-            ))}
-          </div>
-
-          {/* Key Stats Row */}
+          {/* Stats Row */}
           <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-            <StatCard icon={<LifeBuoy color="#2563EB"/>} label="Total Policies" val="2" sub="Active: 2" bg="#EFF6FF" />
-            <StatCard icon={<RefreshCcw color="#16A34A"/>} label="Total Premium" val="₹ 1,53,450" sub="Yearly" bg="#F0FDF4" />
-            <StatCard icon={<FileText color="#9333EA"/>} label="Total Proposals" val="1" sub="In Progress" bg="#FAF5FF" />
-            <StatCard icon={<Briefcase color="#EA580C"/>} label="Total Paid Premium" val="₹ 1,25,000" sub="This Year" bg="#FFF7ED" />
-            <StatCard icon={<History color="#DC2626"/>} label="Total Claims" val="0" sub="No Claims" bg="#FEF2F2" />
+            <StatCard icon={<LifeBuoy color="#2563EB"/>} label="Policies" val={isConverted ? "1" : "0"} sub="Active" bg="#EFF6FF" />
+            <StatCard icon={<RefreshCcw color="#16A34A"/>} label="Premium" val={`₹ ${lead.plan_details?.premium_amount || 0}`} sub="Yearly" bg="#F0FDF4" />
+            <StatCard icon={<FileText color="#9333EA"/>} label="Status" val={lead.status} sub="Current" bg="#FAF5FF" />
           </div>
 
-          {/* Two-Column Details Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div style={s.card}>
-              <div style={s.sectionTitle}>Customer Details <Edit2 size={14} color={colors.primaryBlue}/></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-                <GridRow label="PAN Number" val="ABCDE1234F" />
-                <GridRow label="Aadhaar Number" val="XXXX-XXXX-5678" />
-                <GridRow label="Alternate Mobile" val="+91 91234 56789" />
-                <GridRow label="Email ID" val="amit.verma@gmail.com" />
-                <GridRow label="Address" val="C-1203, Bestech Park View Spa, Sector 67, Gurugram, Haryana - 122002" />
-              </div>
-            </div>
-            <div style={s.card}>
-              <div style={s.sectionTitle}>Interests & Requirements <Edit2 size={14} color={colors.primaryBlue}/></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {['Health Insurance for family of 4 members', 'Term Insurance cover of 1 Cr', 'Looking for savings + tax benefit plans', 'Renewal reminder on WhatsApp'].map(txt => (
-                  <div key={txt} style={{ display: 'flex', gap: '8px', fontSize: '13px', alignItems: 'flex-start' }}>
-                    <CheckCircle size={14} color="#22C55E" style={{ marginTop: '2px' }} />
-                    <span>{txt}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Action Footer */}
+          {!isPaid && isConverted && (
+            <button onClick={handleMarkAsPaid} style={{ width: '100%', backgroundColor: colors.success, color: 'white', border: 'none', padding: '15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '20px' }}>
+              ✅ Confirm Payment Received
+            </button>
+          )}
         </div>
 
-        {/* Right Status Sidebar (Within Content Area) */}
+        {/* Sidebar Status */}
         <div style={{ width: '300px' }}>
            <div style={s.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                <span style={{ fontWeight: '700', fontSize: '14px' }}>Lead Status</span>
-                <span style={{ ...s.badge, backgroundColor: '#DCFCE7', color: '#166534' }}>In Progress</span>
+              <div style={s.sectionTitle}>Followup Status</div>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '15px', borderLeft: `4px solid ${colors.primaryBlue}`, borderRadius: '4px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase' }}>Current Lead State</div>
+                <div style={{ fontSize: '13px', fontWeight: '800', marginTop: '4px' }}>{lead.status.toUpperCase()}</div>
               </div>
-              <div style={{ backgroundColor: '#F8FAFC', padding: '15px', borderLeft: `4px solid ${colors.primaryBlue}`, borderRadius: '4px', marginBottom: '15px' }}>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', marginBottom: '4px' }}>Next Followup</div>
-                <div style={{ fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14}/> 01 Jun 2024, 11:00 AM</div>
-                <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', fontStyle: 'italic' }}>Call & share policy options</div>
-              </div>
-              <button style={{ width: '100%', backgroundColor: colors.primaryBlue, color: '#FFF', border: 'none', borderRadius: '6px', padding: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Plus size={16}/> Add Followup
-              </button>
-           </div>
-
-           <div style={s.card}>
-             <div style={s.sectionTitle}>Active Policies (2) <span style={{ color: colors.primaryBlue, fontSize: '11px', cursor: 'pointer' }}>View All</span></div>
-             <PolicyMini brand="HDFC Life" plan="Click 2 Protect Plus" premium="1,25,000" expiry="30 May 2025" />
-             <PolicyMini brand="Star Health" plan="Health Plus" premium="28,450" expiry="27 May 2025" />
            </div>
         </div>
       </div>
-
-      {/* Internal Footer */}
-      <footer style={{ marginTop: '20px', borderTop: `1px solid ${colors.border}`, paddingTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.textMuted }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Info size={14} color={colors.primaryBlue} /> Note: Customer information is confidential and only for authorized use.
-        </div>
-        <span>All times are in Indian Standard Time (IST).</span>
-      </footer>
     </div>
   );
 };
 
-// Internal Helper Components
+// Internal Helpers
 const DataRow = ({ label, val }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
     <span style={{ color: '#64748B' }}>{label}</span>
-    <span style={{ fontWeight: '700', color: '#1E293B' }}>{val}</span>
-  </div>
-);
-
-const GridRow = ({ label, val }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', marginBottom: '4px' }}>
-    <span style={{ color: '#64748B' }}>{label}</span>
-    <span style={{ fontWeight: '600' }}>{val}</span>
+    <span style={{ fontWeight: '700' }}>{val}</span>
   </div>
 );
 
 const StatCard = ({ icon, label, val, sub, bg }) => (
   <div style={{ flex: 1, backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px' }}>
     <div style={{ width: '36px', height: '36px', backgroundColor: bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>{icon}</div>
-    <div style={{ fontSize: '10px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
+    <div style={{ fontSize: '10px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>{label}</div>
     <div style={{ fontSize: '18px', fontWeight: '800' }}>{val}</div>
     <div style={{ fontSize: '10px', color: '#16A34A', fontWeight: '600' }}>{sub}</div>
-  </div>
-);
-
-const PolicyMini = ({ brand, plan, premium, expiry }) => (
-  <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '12px', marginBottom: '12px' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-      <div style={{ fontSize: '12px', fontWeight: '800' }}>{brand} - <span style={{ fontWeight: '500' }}>{plan}</span></div>
-      <span style={{ fontSize: '9px', backgroundColor: '#DCFCE7', color: '#166534', padding: '1px 4px', borderRadius: '3px' }}>Active</span>
-    </div>
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-      <span>Premium: <span style={{ fontWeight: '700' }}>₹ {premium}</span></span>
-      <span>Expiry: <span style={{ fontWeight: '700' }}>{expiry}</span></span>
-    </div>
   </div>
 );
 
